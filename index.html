@@ -660,7 +660,6 @@
                 <span class="channel-icon">#</span>
                 memes
             </div>
-            
             <div class="channel-category">Voice Channels</div>
             <div class="channel">
                 <span class="channel-icon">🔊</span>
@@ -674,7 +673,6 @@
                 <span class="channel-icon">🔊</span>
                 Music
             </div>
-            
             <div class="channel-category">Other</div>
             <div class="channel" data-channel="resources">
                 <span class="channel-icon">#</span>
@@ -778,8 +776,6 @@
                 <div class="media-tab" data-tab="video">Video</div>
                 <div class="media-tab" data-tab="url">URL</div>
             </div>
-            
-            <!-- GIF Tab -->
             <div class="media-tab-content active" id="gif-tab">
                 <div class="gif-search-container">
                     <input type="text" class="gif-search-input" id="gif-search" placeholder="Search for GIFs...">
@@ -788,8 +784,6 @@
                     <!-- GIF results will be loaded here -->
                 </div>
             </div>
-            
-            <!-- Video Tab -->
             <div class="media-tab-content" id="video-tab">
                 <div class="form-group">
                     <div class="file-input-container">
@@ -801,8 +795,6 @@
                     <video controls></video>
                 </div>
             </div>
-            
-            <!-- URL Tab -->
             <div class="media-tab-content" id="url-tab">
                 <div class="form-group">
                     <label class="form-label" for="url-input">Media URL</label>
@@ -812,7 +804,6 @@
                     <!-- Preview will be shown here -->
                 </div>
             </div>
-            
             <div class="modal-buttons">
                 <button class="btn btn-cancel" id="media-cancel">Cancel</button>
                 <button class="btn btn-primary" id="media-send">Send</button>
@@ -821,205 +812,72 @@
     </div>
 
     <script>
+        const API_URL = 'https://your-vercel-app.vercel.app/api/messages'; // Replace with your Vercel URL
+
         // DOM Elements
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
         const currentChannelElement = document.getElementById('current-channel');
         const channels = document.querySelectorAll('.channel[data-channel]');
-        const userProfile = document.getElementById('user-profile');
-        const usernameElement = document.getElementById('username');
-        const userAvatarElement = document.getElementById('user-avatar');
-        const memberAvatarElement = document.getElementById('member-avatar');
-        const memberNameElement = document.getElementById('member-name');
-        const mediaButton = document.getElementById('media-button');
-        
-        // Username Modal Elements
-        const usernameModal = document.getElementById('username-modal');
-        const usernameInput = document.getElementById('username-input');
-        const usernameError = document.getElementById('username-error');
-        const usernameCancel = document.getElementById('username-cancel');
-        const usernameSave = document.getElementById('username-save');
-        const usernameCountdown = document.getElementById('username-countdown');
-        
-        // Profile Picture Modal Elements
-        const pfpModal = document.getElementById('pfp-modal');
-        const pfpInput = document.getElementById('pfp-input');
-        const pfpPreview = document.getElementById('pfp-preview');
-        const pfpCancel = document.getElementById('pfp-cancel');
-        const pfpSave = document.getElementById('pfp-save');
-        
-        // Media Modal Elements
-        const mediaModal = document.getElementById('media-modal');
-        const mediaTabs = document.querySelectorAll('.media-tab');
-        const mediaTabContents = document.querySelectorAll('.media-tab-content');
-        const gifSearch = document.getElementById('gif-search');
-        const gifResults = document.getElementById('gif-results');
-        const videoInput = document.getElementById('video-input');
-        const videoPreview = document.getElementById('video-preview');
-        const urlInput = document.getElementById('url-input');
-        const urlPreview = document.getElementById('url-preview');
-        const mediaCancel = document.getElementById('media-cancel');
-        const mediaSend = document.getElementById('media-send');
-        
+
         // Current state
         let currentChannel = 'general';
-        let channelMessages = {
-            'welcome': [],
-            'announcements': [],
-            'general': [],
-            'memes': [],
-            'resources': [],
-            'bot-commands': []
-        };
-        
-        // Media state
-        let selectedMedia = null;
-        
-        // Initialize user data
-        let userData = JSON.parse(localStorage.getItem('sircordUserData')) || {
-            username: null,
-            avatar: null,
-            lastUsernameChange: null
-        };
-        
-        // Sample GIFs for demo (in a real app, you'd use a GIF API like Giphy or Tenor)
-        const sampleGifs = [
-            'https://media.giphy.com/media/Ju7l5y9osyymQ/giphy.gif',
-            'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
-            'https://media.giphy.com/media/l0HlNaQ6gWfllcjDO/giphy.gif',
-            'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif',
-            'https://media.giphy.com/media/l46CyJmS9KUbokzsI/giphy.gif',
-            'https://media.giphy.com/media/l4FGni1RBAR2OWsGk/giphy.gif',
-            'https://media.giphy.com/media/l378BzHA5FwWFXVSg/giphy.gif',
-            'https://media.giphy.com/media/3o7aD2d7hy9ktXNDP2/giphy.gif'
-        ];
-        
-        // Initialize the app
-        function init() {
-            // Set up channel switching
-            channels.forEach(channel => {
-                channel.addEventListener('click', () => {
-                    switchChannel(channel.dataset.channel);
-                });
-            });
-            
-            // Set up message sending
-            messageInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-            
-            // Set up profile click handlers
-            userProfile.addEventListener('click', openUsernameModal);
-            userAvatarElement.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openPfpModal();
-            });
-            
-            // Set up username modal
-            usernameCancel.addEventListener('click', closeUsernameModal);
-            usernameSave.addEventListener('click', saveUsername);
-            usernameInput.addEventListener('input', validateUsername);
-            
-            // Set up pfp modal
-            pfpCancel.addEventListener('click', closePfpModal);
-            pfpSave.addEventListener('click', savePfp);
-            pfpInput.addEventListener('change', previewPfp);
-            
-            // Set up media button
-            mediaButton.addEventListener('click', openMediaModal);
-            
-            // Set up media modal
-            mediaTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    switchMediaTab(tab.dataset.tab);
-                });
-            });
-            
-            mediaCancel.addEventListener('click', closeMediaModal);
-            mediaSend.addEventListener('click', sendMedia);
-            
-            // Set up GIF search
-            gifSearch.addEventListener('input', debounce(searchGifs, 500));
-            
-            // Set up video input
-            videoInput.addEventListener('change', previewVideo);
-            
-            // Set up URL input
-            urlInput.addEventListener('input', debounce(previewUrl, 500));
-            
-            // Load user data
-            loadUserData();
-            
-            // Check if username is set, if not, show the modal
-            if (!userData.username) {
-                openUsernameModal();
-            }
-            
-            // Load sample GIFs
-            loadSampleGifs();
-        }
-        
-        // Switch to a different channel
-        function switchChannel(channelName) {
-            // Update active channel
-            document.querySelector(`.channel.active`).classList.remove('active');
-            document.querySelector(`.channel[data-channel="${channelName}"]`).classList.add('active');
-            
-            // Update current channel
-            currentChannel = channelName;
-            currentChannelElement.textContent = channelName;
-            messageInput.placeholder = `Message #${channelName}`;
-            
-            // Clear and load messages for this channel
+
+        // Load messages for a channel
+        async function loadMessagesForChannel(channelName) {
+            const response = await fetch(`${API_URL}?channel=${channelName}`);
+            const messages = await response.json();
+
             chatMessages.innerHTML = '';
-            
+
             // Add welcome message
             const welcomeDiv = document.createElement('div');
             welcomeDiv.className = 'welcome-message';
             welcomeDiv.textContent = `Welcome to #${channelName}! This is the start of the channel.`;
             chatMessages.appendChild(welcomeDiv);
-            
+
             // Add existing messages
-            channelMessages[channelName].forEach(msg => {
+            messages.forEach(msg => {
                 addMessageToDOM(msg);
             });
         }
-        
+
         // Send a message
-        function sendMessage() {
+        async function sendMessage() {
             const text = messageInput.value.trim();
             if ((!text && !selectedMedia) || !userData.username) return;
-            
+
             const message = {
                 author: userData.username,
                 avatar: userData.avatar,
                 text: text,
-                timestamp: new Date().toISOString(),
                 media: selectedMedia
             };
-            
-            // Add to channel messages
-            channelMessages[currentChannel].push(message);
-            
+
+            // Send message to backend
+            const response = await fetch(`${API_URL}?channel=${currentChannel}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(message)
+            });
+
+            const newMessage = await response.json();
+
             // Add to DOM
-            addMessageToDOM(message);
-            
+            addMessageToDOM(newMessage);
+
             // Clear input and selected media
             messageInput.value = '';
             selectedMedia = null;
-            
-            // Save to localStorage
-            localStorage.setItem('sircordChannelMessages', JSON.stringify(channelMessages));
         }
-        
+
         // Add a message to the DOM
         function addMessageToDOM(message) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
-            
+
             // Avatar
             const avatarDiv = document.createElement('div');
             avatarDiv.className = 'message-avatar';
@@ -1031,7 +889,7 @@
                 avatarDiv.textContent = message.author.charAt(0).toUpperCase();
             }
             messageDiv.appendChild(avatarDiv);
-            
+
             // Content
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
@@ -1039,19 +897,19 @@
             // Header
             const headerDiv = document.createElement('div');
             headerDiv.className = 'message-header';
-            
+
             const authorSpan = document.createElement('span');
             authorSpan.className = 'message-author';
             authorSpan.textContent = message.author;
             headerDiv.appendChild(authorSpan);
-            
+
             const timeSpan = document.createElement('span');
             timeSpan.className = 'message-time';
             timeSpan.textContent = formatTime(message.timestamp);
             headerDiv.appendChild(timeSpan);
-            
+
             contentDiv.appendChild(headerDiv);
-            
+
             // Text
             if (message.text) {
                 const textP = document.createElement('p');
@@ -1059,12 +917,12 @@
                 textP.textContent = message.text;
                 contentDiv.appendChild(textP);
             }
-            
+
             // Media
             if (message.media) {
                 const mediaDiv = document.createElement('div');
                 mediaDiv.className = 'message-media';
-                
+
                 if (message.media.type === 'image') {
                     const img = document.createElement('img');
                     img.src = message.media.url;
@@ -1076,291 +934,40 @@
                     video.controls = true;
                     mediaDiv.appendChild(video);
                 }
-                
+
                 contentDiv.appendChild(mediaDiv);
             }
-            
+
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-        
-        // Format time
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            let hours = date.getHours();
-            let minutes = date.getMinutes();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12; // the hour '0' should be '12'
-            minutes = minutes < 10 ? '0'+minutes : minutes;
-            return hours + ':' + minutes + ' ' + ampm;
-        }
-        
-        // Open username modal
-        function openUsernameModal() {
-            usernameModal.style.display = 'flex';
-            usernameInput.focus();
-            validateUsername();
-        }
-        
-        // Close username modal
-        function closeUsernameModal() {
-            usernameModal.style.display = 'none';
-        }
-        
-        // Validate username
-        function validateUsername() {
-            const username = usernameInput.value.trim();
-            const isValid = username.length >= 3 && username.length <= 20;
-            
-            if (isValid) {
-                usernameError.style.display = 'none';
-                usernameSave.disabled = false;
-            } else {
-                usernameError.style.display = 'block';
-                usernameSave.disabled = true;
-            }
-            
-            // Countdown
-            const remaining = 20 - username.length;
-            usernameCountdown.textContent = remaining >= 0 ? remaining : 0;
-        }
-        
-        // Save username
-        function saveUsername() {
-            const username = usernameInput.value.trim();
-            
-            userData.username = username;
-            userData.lastUsernameChange = new Date().toISOString();
-            
-            loadUserData();
-            closeUsernameModal();
-            
-            // Save to localStorage
-            localStorage.setItem('sircordUserData', JSON.stringify(userData));
-        }
-        
-        // Open profile picture modal
-        function openPfpModal() {
-            pfpModal.style.display = 'flex';
-        }
-        
-        // Close profile picture modal
-        function closePfpModal() {
-            pfpModal.style.display = 'none';
-        }
-        
-        // Preview profile picture
-        function previewPfp() {
-            const file = pfpInput.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.addEventListener('load', () => {
-                    pfpPreview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
+
+        // Initialize the app
+        async function init() {
+            // Load messages for the current channel
+            await loadMessagesForChannel(currentChannel);
+
+            // Set up channel switching
+            channels.forEach(channel => {
+                channel.addEventListener('click', async () => {
+                    currentChannel = channel.dataset.channel;
+                    currentChannelElement.textContent = currentChannel;
+                    messageInput.placeholder = `Message #${currentChannel}`;
+                    await loadMessagesForChannel(currentChannel);
                 });
-                
-                reader.readAsDataURL(file);
-            } else {
-                pfpPreview.innerHTML = '';
-            }
-        }
-        
-        // Save profile picture
-        function savePfp() {
-            const file = pfpInput.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.addEventListener('load', () => {
-                    userData.avatar = reader.result;
-                    loadUserData();
-                    closePfpModal();
-                    
-                    // Save to localStorage
-                    localStorage.setItem('sircordUserData', JSON.stringify(userData));
-                });
-                
-                reader.readAsDataURL(file);
-            }
-        }
-        
-        // Open media modal
-        function openMediaModal() {
-            mediaModal.style.display = 'flex';
-        }
-        
-        // Close media modal
-        function closeMediaModal() {
-            mediaModal.style.display = 'none';
-            
-            // Reset media modal
-            switchMediaTab('gif');
-            gifSearch.value = '';
-            gifResults.innerHTML = '';
-            videoInput.value = '';
-            videoPreview.style.display = 'none';
-            videoPreview.querySelector('video').src = '';
-            urlInput.value = '';
-            urlPreview.style.display = 'none';
-            urlPreview.innerHTML = '';
-            selectedMedia = null;
-        }
-        
-        // Switch media tab
-        function switchMediaTab(tabName) {
-            // Update active tab
-            document.querySelector(`.media-tab.active`).classList.remove('active');
-            document.querySelector(`.media-tab[data-tab="${tabName}"]`).classList.add('active');
-            
-            // Update active content
-            document.querySelector(`.media-tab-content.active`).classList.remove('active');
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-        }
-        
-        // Search GIFs
-        function searchGifs() {
-            const searchTerm = gifSearch.value.trim();
-            
-            // In a real app, you'd use a GIF API like Giphy or Tenor
-            // For this demo, we'll just filter the sample GIFs
-            const filteredGifs = sampleGifs.filter(gif => gif.includes(searchTerm));
-            
-            // Display results
-            displayGifs(filteredGifs);
-        }
-        
-        // Display GIFs
-        function displayGifs(gifs) {
-            gifResults.innerHTML = '';
-            
-            gifs.forEach(gif => {
-                const gifItem = document.createElement('div');
-                gifItem.className = 'gif-item';
-                gifItem.innerHTML = `<img src="${gif}" alt="GIF">`;
-                gifItem.addEventListener('click', () => {
-                    selectGif(gif);
-                });
-                gifResults.appendChild(gifItem);
+            });
+
+            // Set up message sending
+            messageInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    await sendMessage();
+                }
             });
         }
-        
-        // Select GIF
-        function selectGif(gifUrl) {
-            selectedMedia = {
-                type: 'image',
-                url: gifUrl
-            };
-        }
-        
-        // Preview video
-        function previewVideo() {
-            const file = videoInput.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.addEventListener('load', () => {
-                    videoPreview.style.display = 'block';
-                    videoPreview.querySelector('video').src = reader.result;
-                });
-                
-                reader.readAsDataURL(file);
-            } else {
-                videoPreview.style.display = 'none';
-                videoPreview.querySelector('video').src = '';
-            }
-        }
-        
-        // Preview URL
-        function previewUrl() {
-            const url = urlInput.value.trim();
-            
-            if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
-                urlPreview.style.display = 'block';
-                urlPreview.innerHTML = `<img src="${url}" alt="URL Preview">`;
-            } else if (url.match(/\.(mp4|webm|ogg)$/) != null) {
-                urlPreview.style.display = 'block';
-                urlPreview.innerHTML = `<video src="${url}" controls></video>`;
-            } else {
-                urlPreview.style.display = 'none';
-                urlPreview.innerHTML = '';
-            }
-        }
-        
-        // Send media
-        function sendMedia() {
-            const url = urlInput.value.trim();
-            const videoFile = videoInput.files[0];
-            
-            if (selectedMedia) {
-                sendMessage();
-                closeMediaModal();
-            } else if (url) {
-                if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
-                    selectedMedia = {
-                        type: 'image',
-                        url: url
-                    };
-                    sendMessage();
-                    closeMediaModal();
-                } else if (url.match(/\.(mp4|webm|ogg)$/) != null) {
-                    selectedMedia = {
-                        type: 'video',
-                        url: url
-                    };
-                    sendMessage();
-                    closeMediaModal();
-                } else {
-                    alert('Invalid URL');
-                }
-            } else if (videoFile) {
-                selectedMedia = {
-                    type: 'video',
-                    url: URL.createObjectURL(videoFile)
-                };
-                sendMessage();
-                closeMediaModal();
-            } else {
-                alert('No media selected');
-            }
-        }
-        
-        // Load user data
-        function loadUserData() {
-            if (userData.username) {
-                usernameElement.textContent = userData.username;
-                memberNameElement.textContent = userData.username;
-            }
-            
-            if (userData.avatar) {
-                userAvatarElement.innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
-                memberAvatarElement.innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
-            } else {
-                userAvatarElement.textContent = userData.username ? userData.username.charAt(0).toUpperCase() : 'Set Username'.charAt(0).toUpperCase();
-                memberAvatarElement.textContent = userData.username ? userData.username.charAt(0).toUpperCase() : 'You'.charAt(0).toUpperCase();
-            }
-        }
-        
-        // Load sample GIFs
-        function loadSampleGifs() {
-            displayGifs(sampleGifs);
-        }
-        
-        // Debounce function
-        function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
-        }
-        
-        // Initialize the app
+
+        // Start the app
         init();
     </script>
 </body>
