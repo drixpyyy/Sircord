@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sircord - Chat Hub</title>
-<!-- Firebase SDK (v8 Compatibility) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <style>
         * {
             margin: 0;
@@ -24,6 +19,7 @@
             color: #fff9c4;
         }
 
+        /* Server sidebar */
         .servers-sidebar {
             width: 72px;
             background-color: #000;
@@ -68,6 +64,7 @@
             margin: 8px 0;
         }
 
+        /* Channels sidebar */
         .channels-sidebar {
             width: 240px;
             background-color: #111;
@@ -168,6 +165,7 @@
             opacity: 0.7;
         }
 
+        /* Main chat area */
         .chat-container {
             flex-grow: 1;
             display: flex;
@@ -234,6 +232,7 @@
 
         .message-content {
             flex-grow: 1;
+            max-width: calc(100% - 56px);
         }
 
         .message-header {
@@ -255,11 +254,25 @@
 
         .message-text {
             line-height: 1.4;
+            word-wrap: break-word;
         }
 
-        .message-image {
-            max-width: 300px;
+        .message-media {
             margin-top: 8px;
+            max-width: 100%;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .message-media img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+        }
+
+        .message-media video {
+            max-width: 100%;
+            max-height: 300px;
             border-radius: 4px;
         }
 
@@ -268,9 +281,16 @@
             border-top: 1px solid #222;
         }
 
+        .chat-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
         .chat-input {
             width: 100%;
             padding: 12px;
+            padding-right: 40px;
             border-radius: 8px;
             background-color: #333;
             border: none;
@@ -283,15 +303,24 @@
             color: #999;
         }
 
-        .image-upload-btn {
-            margin-top: 8px;
-            padding: 6px 12px;
-            background-color: #444;
-            border-radius: 4px;
+        .media-button {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #ffeb3b;
+            font-size: 20px;
             cursor: pointer;
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        .media-button:hover {
+            color: #fff;
+        }
+
+        /* Members sidebar */
         .members-sidebar {
             width: 240px;
             background-color: #111;
@@ -351,6 +380,7 @@
             margin-right: 8px;
         }
 
+        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -488,6 +518,103 @@
             margin-top: 4px;
         }
 
+        /* Media modal styles */
+        .media-modal-content {
+            width: 500px;
+            max-width: 90%;
+        }
+
+        .media-tabs {
+            display: flex;
+            border-bottom: 1px solid #444;
+            margin-bottom: 16px;
+        }
+
+        .media-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .media-tab.active {
+            color: #ffeb3b;
+            border-bottom: 2px solid #ffeb3b;
+        }
+
+        .media-tab-content {
+            display: none;
+        }
+
+        .media-tab-content.active {
+            display: block;
+        }
+
+        .gif-search-container {
+            margin-bottom: 16px;
+        }
+
+        .gif-search-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: #333;
+            border: 1px solid #444;
+            color: #fff9c4;
+        }
+
+        .gif-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .gif-item {
+            cursor: pointer;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 120px;
+        }
+
+        .gif-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gif-item:hover {
+            outline: 2px solid #ffeb3b;
+        }
+
+        .video-preview {
+            width: 100%;
+            max-height: 200px;
+            margin: 16px 0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .video-preview video {
+            width: 100%;
+            max-height: 200px;
+        }
+
+        .url-preview {
+            margin-top: 8px;
+            display: none;
+        }
+
+        .url-preview img, 
+        .url-preview video {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 4px;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 1200px) {
             .members-sidebar {
                 display: none;
@@ -502,6 +629,7 @@
     </style>
 </head>
 <body>
+    <!-- Server sidebar -->
     <div class="servers-sidebar">
         <div class="server-icon home">S</div>
         <div class="server-divider"></div>
@@ -511,6 +639,7 @@
         <div class="server-icon">+</div>
     </div>
 
+    <!-- Channels sidebar -->
     <div class="channels-sidebar">
         <div class="server-header">Gaming Server</div>
         <div class="channels-container">
@@ -557,7 +686,9 @@
             </div>
         </div>
         <div class="user-info" id="user-profile">
-            <div class="user-avatar" id="user-avatar"></div>
+            <div class="user-avatar" id="user-avatar">
+                <!-- User avatar will be set by JavaScript -->
+            </div>
             <div class="user-details">
                 <div class="username" id="username">Set Username</div>
                 <div class="user-status">Online</div>
@@ -565,6 +696,7 @@
         </div>
     </div>
 
+    <!-- Main chat area -->
     <div class="chat-container">
         <div class="chat-header">
             <span class="chat-header-icon">#</span>
@@ -574,25 +706,29 @@
             <div class="welcome-message">
                 Welcome to #general! This is the start of the channel.
             </div>
+            <!-- Messages will be added here by JavaScript -->
         </div>
         <div class="chat-input-container">
-            <textarea class="chat-input" id="message-input" placeholder="Message #general" rows="1"></textarea>
-            <label class="image-upload-btn">
-                Upload Image
-                <input type="file" id="image-upload" accept="image/*" style="display: none;">
-            </label>
+            <div class="chat-input-wrapper">
+                <textarea class="chat-input" id="message-input" placeholder="Message #general" rows="1"></textarea>
+                <button class="media-button" id="media-button" title="Add GIF or Video">📎</button>
+            </div>
         </div>
     </div>
 
+    <!-- Members sidebar -->
     <div class="members-sidebar">
         <div class="members-header">Members — 1</div>
         <div class="member" id="current-user-member">
             <div class="online-indicator"></div>
-            <div class="member-avatar" id="member-avatar"></div>
+            <div class="member-avatar" id="member-avatar">
+                <!-- User avatar will be set by JavaScript -->
+            </div>
             <div class="member-name" id="member-name">You</div>
         </div>
     </div>
 
+    <!-- Username Modal -->
     <div class="modal" id="username-modal">
         <div class="modal-content">
             <div class="modal-header">Set Your Username</div>
@@ -611,10 +747,13 @@
         </div>
     </div>
 
+    <!-- Profile Picture Modal -->
     <div class="modal" id="pfp-modal">
         <div class="modal-content">
             <div class="modal-header">Change Profile Picture</div>
-            <div class="pfp-preview" id="pfp-preview"></div>
+            <div class="pfp-preview" id="pfp-preview">
+                <!-- Preview will be set by JavaScript -->
+            </div>
             <div class="modal-form">
                 <div class="form-group">
                     <div class="file-input-container">
@@ -630,28 +769,61 @@
         </div>
     </div>
 
+    <!-- Media Modal -->
+    <div class="modal" id="media-modal">
+        <div class="modal-content media-modal-content">
+            <div class="modal-header">Add Media</div>
+            <div class="media-tabs">
+                <div class="media-tab active" data-tab="gif">GIF</div>
+                <div class="media-tab" data-tab="video">Video</div>
+                <div class="media-tab" data-tab="url">URL</div>
+            </div>
+            
+            <!-- GIF Tab -->
+            <div class="media-tab-content active" id="gif-tab">
+                <div class="gif-search-container">
+                    <input type="text" class="gif-search-input" id="gif-search" placeholder="Search for GIFs...">
+                </div>
+                <div class="gif-results" id="gif-results">
+                    <!-- GIF results will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Video Tab -->
+            <div class="media-tab-content" id="video-tab">
+                <div class="form-group">
+                    <div class="file-input-container">
+                        <label class="file-input-label" for="video-input">Choose Video</label>
+                        <input type="file" id="video-input" class="file-input" accept="video/*">
+                    </div>
+                </div>
+                <div class="video-preview" id="video-preview">
+                    <video controls></video>
+                </div>
+            </div>
+            
+            <!-- URL Tab -->
+            <div class="media-tab-content" id="url-tab">
+                <div class="form-group">
+                    <label class="form-label" for="url-input">Media URL</label>
+                    <input type="text" id="url-input" class="form-input" placeholder="Paste GIF or video URL">
+                </div>
+                <div class="url-preview" id="url-preview">
+                    <!-- Preview will be shown here -->
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" id="media-cancel">Cancel</button>
+                <button class="btn btn-primary" id="media-send">Send</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Firebase configuration (replace with your own Firebase project config)
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const storage = firebase.storage();
-        const auth = firebase.auth();
-
         // DOM Elements
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
-        const imageUpload = document.getElementById('image-upload');
         const currentChannelElement = document.getElementById('current-channel');
         const channels = document.querySelectorAll('.channel[data-channel]');
         const userProfile = document.getElementById('user-profile');
@@ -659,7 +831,9 @@
         const userAvatarElement = document.getElementById('user-avatar');
         const memberAvatarElement = document.getElementById('member-avatar');
         const memberNameElement = document.getElementById('member-name');
+        const mediaButton = document.getElementById('media-button');
         
+        // Username Modal Elements
         const usernameModal = document.getElementById('username-modal');
         const usernameInput = document.getElementById('username-input');
         const usernameError = document.getElementById('username-error');
@@ -667,32 +841,69 @@
         const usernameSave = document.getElementById('username-save');
         const usernameCountdown = document.getElementById('username-countdown');
         
+        // Profile Picture Modal Elements
         const pfpModal = document.getElementById('pfp-modal');
         const pfpInput = document.getElementById('pfp-input');
         const pfpPreview = document.getElementById('pfp-preview');
         const pfpCancel = document.getElementById('pfp-cancel');
         const pfpSave = document.getElementById('pfp-save');
         
+        // Media Modal Elements
+        const mediaModal = document.getElementById('media-modal');
+        const mediaTabs = document.querySelectorAll('.media-tab');
+        const mediaTabContents = document.querySelectorAll('.media-tab-content');
+        const gifSearch = document.getElementById('gif-search');
+        const gifResults = document.getElementById('gif-results');
+        const videoInput = document.getElementById('video-input');
+        const videoPreview = document.getElementById('video-preview');
+        const urlInput = document.getElementById('url-input');
+        const urlPreview = document.getElementById('url-preview');
+        const mediaCancel = document.getElementById('media-cancel');
+        const mediaSend = document.getElementById('media-send');
+        
         // Current state
-        let currentUser = null;
         let currentChannel = 'general';
-        let userData = {};
+        let channelMessages = {
+            'welcome': [],
+            'announcements': [],
+            'general': [],
+            'memes': [],
+            'resources': [],
+            'bot-commands': []
+        };
+        
+        // Media state
+        let selectedMedia = null;
+        
+        // Initialize user data
+        let userData = JSON.parse(localStorage.getItem('sircordUserData')) || {
+            username: null,
+            avatar: null,
+            lastUsernameChange: null
+        };
+        
+        // Sample GIFs for demo (in a real app, you'd use a GIF API like Giphy or Tenor)
+        const sampleGifs = [
+            'https://media.giphy.com/media/Ju7l5y9osyymQ/giphy.gif',
+            'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
+            'https://media.giphy.com/media/l0HlNaQ6gWfllcjDO/giphy.gif',
+            'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif',
+            'https://media.giphy.com/media/l46CyJmS9KUbokzsI/giphy.gif',
+            'https://media.giphy.com/media/l4FGni1RBAR2OWsGk/giphy.gif',
+            'https://media.giphy.com/media/l378BzHA5FwWFXVSg/giphy.gif',
+            'https://media.giphy.com/media/3o7aD2d7hy9ktXNDP2/giphy.gif'
+        ];
         
         // Initialize the app
         function init() {
-            auth.signInAnonymously()
-                .then((userCredential) => {
-                    currentUser = userCredential.user;
-                    setupRealtimeListeners();
-                })
-                .catch((error) => console.error('Auth error:', error));
-
+            // Set up channel switching
             channels.forEach(channel => {
                 channel.addEventListener('click', () => {
                     switchChannel(channel.dataset.channel);
                 });
             });
             
+            // Set up message sending
             messageInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -700,116 +911,116 @@
                 }
             });
             
-            imageUpload.addEventListener('change', handleImageUpload);
-            
+            // Set up profile click handlers
             userProfile.addEventListener('click', openUsernameModal);
             userAvatarElement.addEventListener('click', (e) => {
                 e.stopPropagation();
                 openPfpModal();
             });
             
+            // Set up username modal
             usernameCancel.addEventListener('click', closeUsernameModal);
             usernameSave.addEventListener('click', saveUsername);
             usernameInput.addEventListener('input', validateUsername);
             
+            // Set up pfp modal
             pfpCancel.addEventListener('click', closePfpModal);
             pfpSave.addEventListener('click', savePfp);
             pfpInput.addEventListener('change', previewPfp);
+            
+            // Set up media button
+            mediaButton.addEventListener('click', openMediaModal);
+            
+            // Set up media modal
+            mediaTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchMediaTab(tab.dataset.tab);
+                });
+            });
+            
+            mediaCancel.addEventListener('click', closeMediaModal);
+            mediaSend.addEventListener('click', sendMedia);
+            
+            // Set up GIF search
+            gifSearch.addEventListener('input', debounce(searchGifs, 500));
+            
+            // Set up video input
+            videoInput.addEventListener('change', previewVideo);
+            
+            // Set up URL input
+            urlInput.addEventListener('input', debounce(previewUrl, 500));
+            
+            // Load user data
+            loadUserData();
+            
+            // Check if username is set, if not, show the modal
+            if (!userData.username) {
+                openUsernameModal();
+            }
+            
+            // Load sample GIFs
+            loadSampleGifs();
         }
         
-        function setupRealtimeListeners() {
-            channels.forEach(channel => {
-                const channelName = channel.dataset.channel;
-                if (channelName) {
-                    db.ref(`channels/${channelName}`).on('child_added', (snapshot) => {
-                        const message = snapshot.val();
-                        if (currentChannel === channelName) {
-                            addMessageToDOM(message);
-                        }
-                    });
-                }
-            });
-
-            if (currentUser) {
-                db.ref(`users/${currentUser.uid}`).on('value', (snapshot) => {
-                    userData = snapshot.val() || {
-                        username: null,
-                        avatar: null,
-                        lastUsernameChange: null
-                    };
-                    loadUserData();
-                    if (!userData.username) {
-                        openUsernameModal();
-                    }
-                });
-            }
-        }
-
+        // Switch to a different channel
         function switchChannel(channelName) {
+            // Update active channel
+            document.querySelector(`.channel.active`).classList.remove('active');
+            document.querySelector(`.channel[data-channel="${channelName}"]`).classList.add('active');
+            
+            // Update current channel
             currentChannel = channelName;
             currentChannelElement.textContent = channelName;
             messageInput.placeholder = `Message #${channelName}`;
             
-            document.querySelector(`.channel.active`)?.classList.remove('active');
-            document.querySelector(`.channel[data-channel="${channelName}"]`).classList.add('active');
-            
+            // Clear and load messages for this channel
             chatMessages.innerHTML = '';
+            
+            // Add welcome message
             const welcomeDiv = document.createElement('div');
             welcomeDiv.className = 'welcome-message';
             welcomeDiv.textContent = `Welcome to #${channelName}! This is the start of the channel.`;
             chatMessages.appendChild(welcomeDiv);
             
-            db.ref(`channels/${channelName}`).once('value', (snapshot) => {
-                const messages = snapshot.val();
-                if (messages) {
-                    Object.values(messages).forEach(addMessageToDOM);
-                }
+            // Add existing messages
+            channelMessages[channelName].forEach(msg => {
+                addMessageToDOM(msg);
             });
         }
-
+        
+        // Send a message
         function sendMessage() {
             const text = messageInput.value.trim();
-            if (!text || !userData.username || !currentUser) return;
-
+            if ((!text && !selectedMedia) || !userData.username) return;
+            
             const message = {
                 author: userData.username,
                 avatar: userData.avatar,
                 text: text,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                uid: currentUser.uid
+                timestamp: new Date().toISOString(),
+                media: selectedMedia
             };
-
-            db.ref(`channels/${currentChannel}`).push(message)
-                .then(() => {
-                    messageInput.value = '';
-                })
-                .catch(error => console.error('Send error:', error));
+            
+            // Add to channel messages
+            channelMessages[currentChannel].push(message);
+            
+            // Add to DOM
+            addMessageToDOM(message);
+            
+            // Clear input and selected media
+            messageInput.value = '';
+            selectedMedia = null;
+            
+            // Save to localStorage
+            localStorage.setItem('sircordChannelMessages', JSON.stringify(channelMessages));
         }
-
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (!file || !currentUser || !userData.username) return;
-
-            const storageRef = storage.ref(`chat-images/${currentUser.uid}/${Date.now()}_${file.name}`);
-            storageRef.put(file).then((snapshot) => {
-                snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    const message = {
-                        author: userData.username,
-                        avatar: userData.avatar,
-                        image: downloadURL,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        uid: currentUser.uid
-                    };
-                    db.ref(`channels/${currentChannel}`).push(message);
-                });
-            });
-            e.target.value = '';
-        }
-
+        
+        // Add a message to the DOM
         function addMessageToDOM(message) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
             
+            // Avatar
             const avatarDiv = document.createElement('div');
             avatarDiv.className = 'message-avatar';
             if (message.avatar) {
@@ -817,234 +1028,340 @@
                 img.src = message.avatar;
                 avatarDiv.appendChild(img);
             } else {
-                avatarDiv.textContent = message.author?.charAt(0).toUpperCase() || 'U';
+                avatarDiv.textContent = message.author.charAt(0).toUpperCase();
             }
+            messageDiv.appendChild(avatarDiv);
             
+            // Content
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            
+
+            // Header
             const headerDiv = document.createElement('div');
             headerDiv.className = 'message-header';
             
             const authorSpan = document.createElement('span');
             authorSpan.className = 'message-author';
-            authorSpan.textContent = message.author || 'Unknown';
+            authorSpan.textContent = message.author;
+            headerDiv.appendChild(authorSpan);
             
             const timeSpan = document.createElement('span');
             timeSpan.className = 'message-time';
-            timeSpan.textContent = formatTimestamp(message.timestamp);
-            
-            headerDiv.appendChild(authorSpan);
+            timeSpan.textContent = formatTime(message.timestamp);
             headerDiv.appendChild(timeSpan);
+            
             contentDiv.appendChild(headerDiv);
             
+            // Text
             if (message.text) {
-                const textDiv = document.createElement('div');
-                textDiv.className = 'message-text';
-                textDiv.textContent = message.text;
-                contentDiv.appendChild(textDiv);
+                const textP = document.createElement('p');
+                textP.className = 'message-text';
+                textP.textContent = message.text;
+                contentDiv.appendChild(textP);
             }
             
-            if (message.image) {
-                const img = document.createElement('img');
-                img.src = message.image;
-                img.className = 'message-image';
-                contentDiv.appendChild(img);
+            // Media
+            if (message.media) {
+                const mediaDiv = document.createElement('div');
+                mediaDiv.className = 'message-media';
+                
+                if (message.media.type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = message.media.url;
+                    img.alt = 'Media';
+                    mediaDiv.appendChild(img);
+                } else if (message.media.type === 'video') {
+                    const video = document.createElement('video');
+                    video.src = message.media.url;
+                    video.controls = true;
+                    mediaDiv.appendChild(video);
+                }
+                
+                contentDiv.appendChild(mediaDiv);
             }
             
-            messageDiv.appendChild(avatarDiv);
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-
-        function formatTimestamp(timestamp) {
+        
+        // Format time
+        function formatTime(timestamp) {
             const date = new Date(timestamp);
-            const now = new Date();
-            const isToday = date.toDateString() === now.toDateString();
-            
-            const hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, '0');
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
             const ampm = hours >= 12 ? 'PM' : 'AM';
-            const formattedHours = (hours % 12) || 12;
-            
-            return isToday 
-                ? `Today at ${formattedHours}:${minutes} ${ampm}`
-                : `${date.toLocaleDateString()} ${formattedHours}:${minutes} ${ampm}`;
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            minutes = minutes < 10 ? '0'+minutes : minutes;
+            return hours + ':' + minutes + ' ' + ampm;
         }
-
-        function loadUserData() {
-            if (userData.username) {
-                usernameElement.textContent = userData.username;
-                memberNameElement.textContent = `${userData.username} (You)`;
-            }
-            updateAvatarDisplay();
-            updateUsernameChangeStatus();
-        }
-
-        function updateAvatarDisplay() {
-            if (userData.avatar) {
-                userAvatarElement.innerHTML = '';
-                const userImg = document.createElement('img');
-                userImg.src = userData.avatar;
-                userImg.alt = userData.username || 'User';
-                userAvatarElement.appendChild(userImg);
-                
-                memberAvatarElement.innerHTML = '';
-                const memberImg = document.createElement('img');
-                memberImg.src = userData.avatar;
-                memberImg.alt = userData.username || 'User';
-                memberAvatarElement.appendChild(memberImg);
-                
-                pfpPreview.innerHTML = '';
-                const previewImg = document.createElement('img');
-                previewImg.src = userData.avatar;
-                previewImg.alt = 'Preview';
-                pfpPreview.appendChild(previewImg);
-            } else {
-                const initial = userData.username ? userData.username.charAt(0).toUpperCase() : 'U';
-                userAvatarElement.innerHTML = initial;
-                memberAvatarElement.innerHTML = initial;
-                pfpPreview.innerHTML = initial;
-            }
-        }
-
+        
+        // Open username modal
         function openUsernameModal() {
             usernameModal.style.display = 'flex';
-            usernameInput.value = userData.username || '';
+            usernameInput.focus();
             validateUsername();
-            updateUsernameChangeStatus();
         }
-
+        
+        // Close username modal
         function closeUsernameModal() {
             usernameModal.style.display = 'none';
         }
-
+        
+        // Validate username
         function validateUsername() {
             const username = usernameInput.value.trim();
             const isValid = username.length >= 3 && username.length <= 20;
             
-            if (!isValid) {
-                usernameError.style.display = 'block';
-                usernameSave.disabled = true;
-            } else {
+            if (isValid) {
                 usernameError.style.display = 'none';
                 usernameSave.disabled = false;
-            }
-            return isValid;
-        }
-
-        function saveUsername() {
-            if (!validateUsername() || !currentUser) return;
-            
-            const newUsername = usernameInput.value.trim();
-            const userRef = db.ref(`users/${currentUser.uid}`);
-            
-            userRef.once('value').then((snapshot) => {
-                const data = snapshot.val() || {};
-                if (data.lastUsernameChange) {
-                    const daysSinceChange = (Date.now() - data.lastUsernameChange) / (1000 * 60 * 60 * 24);
-                    if (daysSinceChange < 5) {
-                        alert(`You can only change your username once every 5 days. Please try again in ${Math.ceil(5 - daysSinceChange)} days.`);
-                        return;
-                    }
-                }
-                
-                userRef.update({
-                    username: newUsername,
-                    lastUsernameChange: firebase.database.ServerValue.TIMESTAMP
-                }).then(() => {
-                    closeUsernameModal();
-                });
-            });
-        }
-
-        function updateUsernameChangeStatus() {
-            if (userData.username && userData.lastUsernameChange) {
-                const lastChange = new Date(userData.lastUsernameChange);
-                const now = new Date();
-                const daysSinceChange = (now - lastChange) / (1000 * 60 * 60 * 24);
-                
-                if (daysSinceChange < 5) {
-                    const daysLeft = Math.ceil(5 - daysSinceChange);
-                    usernameCountdown.textContent = `Next change in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}.`;
-                    usernameCountdown.style.display = 'block';
-                } else {
-                    usernameCountdown.style.display = 'none';
-                }
             } else {
-                usernameCountdown.style.display = 'none';
+                usernameError.style.display = 'block';
+                usernameSave.disabled = true;
             }
+            
+            // Countdown
+            const remaining = 20 - username.length;
+            usernameCountdown.textContent = remaining >= 0 ? remaining : 0;
         }
-
+        
+        // Save username
+        function saveUsername() {
+            const username = usernameInput.value.trim();
+            
+            userData.username = username;
+            userData.lastUsernameChange = new Date().toISOString();
+            
+            loadUserData();
+            closeUsernameModal();
+            
+            // Save to localStorage
+            localStorage.setItem('sircordUserData', JSON.stringify(userData));
+        }
+        
+        // Open profile picture modal
         function openPfpModal() {
             pfpModal.style.display = 'flex';
         }
-
+        
+        // Close profile picture modal
         function closePfpModal() {
             pfpModal.style.display = 'none';
         }
-
-        function previewPfp(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        
+        // Preview profile picture
+        function previewPfp() {
+            const file = pfpInput.files[0];
             
-            if (!file.type.startsWith('image/')) {
-                alert('Please select an image file.');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.addEventListener('load', () => {
+                    pfpPreview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
+                });
+                
+                reader.readAsDataURL(file);
+            } else {
                 pfpPreview.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = event.target.result;
-                img.alt = 'Preview';
-                pfpPreview.appendChild(img);
-            };
-            reader.readAsDataURL(file);
+            }
         }
-
+        
+        // Save profile picture
         function savePfp() {
             const file = pfpInput.files[0];
-            if (!file || !currentUser) return;
             
-            const storageRef = storage.ref(`avatars/${currentUser.uid}`);
-            storageRef.put(file).then((snapshot) => {
-                snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    db.ref(`users/${currentUser.uid}`).update({
-                        avatar: downloadURL
-                    }).then(() => {
-                        closePfpModal();
-                    });
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.addEventListener('load', () => {
+                    userData.avatar = reader.result;
+                    loadUserData();
+                    closePfpModal();
+                    
+                    // Save to localStorage
+                    localStorage.setItem('sircordUserData', JSON.stringify(userData));
                 });
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Open media modal
+        function openMediaModal() {
+            mediaModal.style.display = 'flex';
+        }
+        
+        // Close media modal
+        function closeMediaModal() {
+            mediaModal.style.display = 'none';
+            
+            // Reset media modal
+            switchMediaTab('gif');
+            gifSearch.value = '';
+            gifResults.innerHTML = '';
+            videoInput.value = '';
+            videoPreview.style.display = 'none';
+            videoPreview.querySelector('video').src = '';
+            urlInput.value = '';
+            urlPreview.style.display = 'none';
+            urlPreview.innerHTML = '';
+            selectedMedia = null;
+        }
+        
+        // Switch media tab
+        function switchMediaTab(tabName) {
+            // Update active tab
+            document.querySelector(`.media-tab.active`).classList.remove('active');
+            document.querySelector(`.media-tab[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Update active content
+            document.querySelector(`.media-tab-content.active`).classList.remove('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        // Search GIFs
+        function searchGifs() {
+            const searchTerm = gifSearch.value.trim();
+            
+            // In a real app, you'd use a GIF API like Giphy or Tenor
+            // For this demo, we'll just filter the sample GIFs
+            const filteredGifs = sampleGifs.filter(gif => gif.includes(searchTerm));
+            
+            // Display results
+            displayGifs(filteredGifs);
+        }
+        
+        // Display GIFs
+        function displayGifs(gifs) {
+            gifResults.innerHTML = '';
+            
+            gifs.forEach(gif => {
+                const gifItem = document.createElement('div');
+                gifItem.className = 'gif-item';
+                gifItem.innerHTML = `<img src="${gif}" alt="GIF">`;
+                gifItem.addEventListener('click', () => {
+                    selectGif(gif);
+                });
+                gifResults.appendChild(gifItem);
             });
         }
-
-        document.addEventListener('DOMContentLoaded', init);
+        
+        // Select GIF
+        function selectGif(gifUrl) {
+            selectedMedia = {
+                type: 'image',
+                url: gifUrl
+            };
+        }
+        
+        // Preview video
+        function previewVideo() {
+            const file = videoInput.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.addEventListener('load', () => {
+                    videoPreview.style.display = 'block';
+                    videoPreview.querySelector('video').src = reader.result;
+                });
+                
+                reader.readAsDataURL(file);
+            } else {
+                videoPreview.style.display = 'none';
+                videoPreview.querySelector('video').src = '';
+            }
+        }
+        
+        // Preview URL
+        function previewUrl() {
+            const url = urlInput.value.trim();
+            
+            if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+                urlPreview.style.display = 'block';
+                urlPreview.innerHTML = `<img src="${url}" alt="URL Preview">`;
+            } else if (url.match(/\.(mp4|webm|ogg)$/) != null) {
+                urlPreview.style.display = 'block';
+                urlPreview.innerHTML = `<video src="${url}" controls></video>`;
+            } else {
+                urlPreview.style.display = 'none';
+                urlPreview.innerHTML = '';
+            }
+        }
+        
+        // Send media
+        function sendMedia() {
+            const url = urlInput.value.trim();
+            const videoFile = videoInput.files[0];
+            
+            if (selectedMedia) {
+                sendMessage();
+                closeMediaModal();
+            } else if (url) {
+                if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+                    selectedMedia = {
+                        type: 'image',
+                        url: url
+                    };
+                    sendMessage();
+                    closeMediaModal();
+                } else if (url.match(/\.(mp4|webm|ogg)$/) != null) {
+                    selectedMedia = {
+                        type: 'video',
+                        url: url
+                    };
+                    sendMessage();
+                    closeMediaModal();
+                } else {
+                    alert('Invalid URL');
+                }
+            } else if (videoFile) {
+                selectedMedia = {
+                    type: 'video',
+                    url: URL.createObjectURL(videoFile)
+                };
+                sendMessage();
+                closeMediaModal();
+            } else {
+                alert('No media selected');
+            }
+        }
+        
+        // Load user data
+        function loadUserData() {
+            if (userData.username) {
+                usernameElement.textContent = userData.username;
+                memberNameElement.textContent = userData.username;
+            }
+            
+            if (userData.avatar) {
+                userAvatarElement.innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
+                memberAvatarElement.innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
+            } else {
+                userAvatarElement.textContent = userData.username ? userData.username.charAt(0).toUpperCase() : 'Set Username'.charAt(0).toUpperCase();
+                memberAvatarElement.textContent = userData.username ? userData.username.charAt(0).toUpperCase() : 'You'.charAt(0).toUpperCase();
+            }
+        }
+        
+        // Load sample GIFs
+        function loadSampleGifs() {
+            displayGifs(sampleGifs);
+        }
+        
+        // Debounce function
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+        
+        // Initialize the app
+        init();
     </script>
 </body>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCwqVmuoXqpn_0_ROUz-OHXnCn7YzCtDAs",
-    authDomain: "messages-7910b.firebaseapp.com",
-    projectId: "messages-7910b",
-    storageBucket: "messages-7910b.firebasestorage.app",
-    messagingSenderId: "997827107852",
-    appId: "1:997827107852:web:56f4cf12ba7c210383e229",
-    measurementId: "G-D27DR2F8E6"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
 </html>
