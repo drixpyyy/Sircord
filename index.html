@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sircord - Chat Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #111;
+            color: #fff9c4;
+        }
+
+        /* Server sidebar */
+        .servers-sidebar {
+            width: 72px;
+            background-color: #000;
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .server-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ffeb3b, #f57f17);
+            border-radius: 50%;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: border-radius 0.2s;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .server-icon:hover {
+            border-radius: 16px;
+        }
+
+        .server-icon.active {
+            border-radius: 16px;
+        }
+
+        .server-icon.home {
+            background: linear-gradient(135deg, #ffeb3b, #fbc02d);
+        }
+
+        .server-divider {
+            width: 32px;
+            height: 2px;
+            background-color: #333;
+            margin: 8px 0;
+        }
+
+        /* Channels sidebar */
+        .channels-sidebar {
+            width: 240px;
+            background-color: #111;
+            border-right: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .server-header {
+            padding: 16px;
+            border-bottom: 1px solid #222;
+            font-weight: bold;
+            font-size: 16px;
+            color: #ffeb3b;
+        }
+
+        .channels-container {
+            padding: 16px 8px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .channel-category {
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff59d;
+            margin-bottom: 8px;
+            padding: 0 8px;
+        }
+
+        .channel {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            color: #fff9c4;
+            opacity: 0.7;
+        }
+
+        .channel:hover {
+            background-color: #222;
+            opacity: 1;
+        }
+
+        .channel.active {
+            background-color: #333;
+            opacity: 1;
+        }
+
+        .channel-icon {
+            margin-right: 6px;
+            font-size: 18px;
+        }
+
+        .user-info {
+            padding: 10px;
+            background-color: #0a0a0a;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffeb3b, #f57f17);
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        .username {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .user-status {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Main chat area */
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #181818;
+        }
+
+        .chat-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-header-icon {
+            margin-right: 6px;
+            font-size: 20px;
+        }
+
+        .chat-header-title {
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .welcome-message {
+            text-align: center;
+            margin: 40px 0;
+            color: #ffeb3b;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffeb3b, #f57f17);
+            margin-right: 16px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            flex-grow: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-weight: bold;
+            color: #ffeb3b;
+            margin-right: 8px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .message-text {
+            line-height: 1.4;
+        }
+
+        .chat-input-container {
+            padding: 16px;
+            border-top: 1px solid #222;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #333;
+            border: none;
+            color: #fff9c4;
+            outline: none;
+            resize: none;
+        }
+
+        .chat-input::placeholder {
+            color: #999;
+        }
+
+        /* Members sidebar */
+        .members-sidebar {
+            width: 240px;
+            background-color: #111;
+            border-left: 1px solid #222;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .members-header {
+            padding: 0 16px 16px;
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff59d;
+        }
+
+        .member {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        .member:hover {
+            background-color: #222;
+        }
+
+        .member-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffeb3b, #f57f17);
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .member-name {
+            font-size: 14px;
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #43b581;
+            margin-right: 8px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #222;
+            border-radius: 8px;
+            padding: 24px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #ffeb3b;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #333;
+            border: 1px solid #444;
+            color: #fff9c4;
+        }
+
+        .form-error {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-cancel {
+            background-color: #444;
+            color: #fff;
+        }
+
+        .btn-primary {
+            background-color: #ffeb3b;
+            color: #000;
+        }
+
+        .btn-primary:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+
+        .pfp-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffeb3b, #f57f17);
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .pfp-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-input-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-label {
+            padding: 8px 16px;
+            border-radius: 4px;
+            background-color: #444;
+            color: #fff;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .countdown {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .members-sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .channels-sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Server sidebar -->
+    <div class="servers-sidebar">
+        <div class="server-icon home">S</div>
+        <div class="server-divider"></div>
+        <div class="server-icon active">G</div>
+        <div class="server-icon">C</div>
+        <div class="server-icon">D</div>
+        <div class="server-icon">+</div>
+    </div>
+
+    <!-- Channels sidebar -->
+    <div class="channels-sidebar">
+        <div class="server-header">Gaming Server</div>
+        <div class="channels-container">
+            <div class="channel-category">Text Channels</div>
+            <div class="channel" data-channel="welcome">
+                <span class="channel-icon">#</span>
+                welcome
+            </div>
+            <div class="channel" data-channel="announcements">
+                <span class="channel-icon">#</span>
+                announcements
+            </div>
+            <div class="channel active" data-channel="general">
+                <span class="channel-icon">#</span>
+                general
+            </div>
+            <div class="channel" data-channel="memes">
+                <span class="channel-icon">#</span>
+                memes
+            </div>
+            
+            <div class="channel-category">Voice Channels</div>
+            <div class="channel">
+                <span class="channel-icon">🔊</span>
+                General Voice
+            </div>
+            <div class="channel">
+                <span class="channel-icon">🔊</span>
+                Gaming
+            </div>
+            <div class="channel">
+                <span class="channel-icon">🔊</span>
+                Music
+            </div>
+            
+            <div class="channel-category">Other</div>
+            <div class="channel" data-channel="resources">
+                <span class="channel-icon">#</span>
+                resources
+            </div>
+            <div class="channel" data-channel="bot-commands">
+                <span class="channel-icon">#</span>
+                bot-commands
+            </div>
+        </div>
+        <div class="user-info" id="user-profile">
+            <div class="user-avatar" id="user-avatar">
+                <!-- User avatar will be set by JavaScript -->
+            </div>
+            <div class="user-details">
+                <div class="username" id="username">Set Username</div>
+                <div class="user-status">Online</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main chat area -->
+    <div class="chat-container">
+        <div class="chat-header">
+            <span class="chat-header-icon">#</span>
+            <span class="chat-header-title" id="current-channel">general</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-message">
+                Welcome to #general! This is the start of the channel.
+            </div>
+            <!-- Messages will be added here by JavaScript -->
+        </div>
+        <div class="chat-input-container">
+            <textarea class="chat-input" id="message-input" placeholder="Message #general" rows="1"></textarea>
+        </div>
+    </div>
+
+    <!-- Members sidebar -->
+    <div class="members-sidebar">
+        <div class="members-header">Members — 1</div>
+        <div class="member" id="current-user-member">
+            <div class="online-indicator"></div>
+            <div class="member-avatar" id="member-avatar">
+                <!-- User avatar will be set by JavaScript -->
+            </div>
+            <div class="member-name" id="member-name">You</div>
+        </div>
+    </div>
+
+    <!-- Username Modal -->
+    <div class="modal" id="username-modal">
+        <div class="modal-content">
+            <div class="modal-header">Set Your Username</div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label class="form-label" for="username-input">Username</label>
+                    <input type="text" id="username-input" class="form-input" placeholder="Enter a username">
