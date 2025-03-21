@@ -592,3 +592,429 @@
                 <div class="form-group">
                     <label class="form-label" for="username-input">Username</label>
                     <input type="text" id="username-input" class="form-input" placeholder="Enter a username">
+                    <div class="form-error" id="username-error">Username must be between 3 and 20 characters</div>
+                    <div class="countdown" id="username-countdown"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" id="username-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="username-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Picture Modal -->
+    <div class="modal" id="pfp-modal">
+        <div class="modal-content">
+            <div class="modal-header">Change Profile Picture</div>
+            <div class="pfp-preview" id="pfp-preview">
+                <!-- Preview will be set by JavaScript -->
+            </div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <div class="file-input-container">
+                        <label class="file-input-label" for="pfp-input">Choose Image</label>
+                        <input type="file" id="pfp-input" class="file-input" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" id="pfp-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="pfp-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const currentChannelElement = document.getElementById('current-channel');
+        const channels = document.querySelectorAll('.channel[data-channel]');
+        const userProfile = document.getElementById('user-profile');
+        const usernameElement = document.getElementById('username');
+        const userAvatarElement = document.getElementById('user-avatar');
+        const memberAvatarElement = document.getElementById('member-avatar');
+        const memberNameElement = document.getElementById('member-name');
+        
+        // Username Modal Elements
+        const usernameModal = document.getElementById('username-modal');
+        const usernameInput = document.getElementById('username-input');
+        const usernameError = document.getElementById('username-error');
+        const usernameCancel = document.getElementById('username-cancel');
+        const usernameSave = document.getElementById('username-save');
+        const usernameCountdown = document.getElementById('username-countdown');
+        
+        // Profile Picture Modal Elements
+        const pfpModal = document.getElementById('pfp-modal');
+        const pfpInput = document.getElementById('pfp-input');
+        const pfpPreview = document.getElementById('pfp-preview');
+        const pfpCancel = document.getElementById('pfp-cancel');
+        const pfpSave = document.getElementById('pfp-save');
+        
+        // Current state
+        let currentChannel = 'general';
+        let channelMessages = {
+            'welcome': [],
+            'announcements': [],
+            'general': [],
+            'memes': [],
+            'resources': [],
+            'bot-commands': []
+        };
+        
+        // Initialize user data
+        let userData = JSON.parse(localStorage.getItem('sircordUserData')) || {
+            username: null,
+            avatar: null,
+            lastUsernameChange: null
+        };
+        
+        // Initialize the app
+        function init() {
+            // Set up channel switching
+            channels.forEach(channel => {
+                channel.addEventListener('click', () => {
+                    switchChannel(channel.dataset.channel);
+                });
+            });
+            
+            // Set up message sending
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Set up profile click handlers
+            userProfile.addEventListener('click', openUsernameModal);
+            userAvatarElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openPfpModal();
+            });
+            
+            // Set up username modal
+            usernameCancel.addEventListener('click', closeUsernameModal);
+            usernameSave.addEventListener('click', saveUsername);
+            usernameInput.addEventListener('input', validateUsername);
+            
+            // Set up pfp modal
+            pfpCancel.addEventListener('click', closePfpModal);
+            pfpSave.addEventListener('click', savePfp);
+            pfpInput.addEventListener('change', previewPfp);
+            
+            // Load user data
+            loadUserData();
+            
+            // Check if username is set, if not, show the modal
+            if (!userData.username) {
+                openUsernameModal();
+            }
+        }
+        
+        // Switch to a different channel
+        function switchChannel(channelName) {
+            // Update active channel
+            document.querySelector(`.channel.active`).classList.remove('active');
+            document.querySelector(`.channel[data-channel="${channelName}"]`).classList.add('active');
+            
+            // Update current channel
+            currentChannel = channelName;
+            currentChannelElement.textContent = channelName;
+            messageInput.placeholder = `Message #${channelName}`;
+            
+            // Clear and load messages for this channel
+            chatMessages.innerHTML = '';
+            
+            // Add welcome message
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'welcome-message';
+            welcomeDiv.textContent = `Welcome to #${channelName}! This is the start of the channel.`;
+            chatMessages.appendChild(welcomeDiv);
+            
+            // Add existing messages
+            channelMessages[channelName].forEach(msg => {
+                addMessageToDOM(msg);
+            });
+        }
+        
+        // Send a message
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || !userData.username) return;
+            
+            const message = {
+                author: userData.username,
+                avatar: userData.avatar,
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Add to channel messages
+            channelMessages[currentChannel].push(message);
+            
+            // Add to DOM
+            addMessageToDOM(message);
+            
+            // Clear input
+            messageInput.value = '';
+            
+            // Save to localStorage
+            localStorage.setItem('sircordChannelMessages', JSON.stringify(channelMessages));
+        }
+        
+        // Add a message to the DOM
+        function addMessageToDOM(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            
+            if (message.avatar) {
+                const img = document.createElement('img');
+                img.src = message.avatar;
+                img.alt = message.author;
+                avatarDiv.appendChild(img);
+            } else {
+                avatarDiv.textContent = message.author.charAt(0).toUpperCase();
+            }
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'message-header';
+            
+            const authorSpan = document.createElement('span');
+            authorSpan.className = 'message-author';
+            authorSpan.textContent = message.author;
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'message-time';
+            timeSpan.textContent = formatTimestamp(message.timestamp);
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = message.text;
+            
+            headerDiv.appendChild(authorSpan);
+            headerDiv.appendChild(timeSpan);
+            contentDiv.appendChild(headerDiv);
+            contentDiv.appendChild(textDiv);
+            
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            
+            const hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = (hours % 12) || 12;
+            
+            return isToday 
+                ? `Today at ${formattedHours}:${minutes} ${ampm}`
+                : `${date.toLocaleDateString()} ${formattedHours}:${minutes} ${ampm}`;
+        }
+        
+        // Load user data
+        function loadUserData() {
+            // Try to load from localStorage
+            const savedMessages = localStorage.getItem('sircordChannelMessages');
+            if (savedMessages) {
+                channelMessages = JSON.parse(savedMessages);
+            }
+            
+            // Update UI with user data
+            if (userData.username) {
+                usernameElement.textContent = userData.username;
+                memberNameElement.textContent = `${userData.username} (You)`;
+            }
+            
+            updateAvatarDisplay();
+            
+            // Check if username change is allowed
+            updateUsernameChangeStatus();
+        }
+        
+        // Update avatar display in all places
+        function updateAvatarDisplay() {
+            if (userData.avatar) {
+                // Create and set avatar image in user info
+                userAvatarElement.innerHTML = '';
+                const userImg = document.createElement('img');
+                userImg.src = userData.avatar;
+                userImg.alt = userData.username || 'User';
+                userAvatarElement.appendChild(userImg);
+                
+                // Create and set avatar image in members list
+                memberAvatarElement.innerHTML = '';
+                const memberImg = document.createElement('img');
+                memberImg.src = userData.avatar;
+                memberImg.alt = userData.username || 'User';
+                memberAvatarElement.appendChild(memberImg);
+                
+                // Set preview in modal
+                pfpPreview.innerHTML = '';
+                const previewImg = document.createElement('img');
+                previewImg.src = userData.avatar;
+                previewImg.alt = 'Preview';
+                pfpPreview.appendChild(previewImg);
+            } else {
+                // Set default avatar with first letter
+                const initial = userData.username ? userData.username.charAt(0).toUpperCase() : 'U';
+                userAvatarElement.innerHTML = initial;
+                memberAvatarElement.innerHTML = initial;
+                pfpPreview.innerHTML = initial;
+            }
+        }
+        
+        // Open username modal
+        function openUsernameModal() {
+            usernameModal.style.display = 'flex';
+            usernameInput.value = userData.username || '';
+            validateUsername();
+            updateUsernameChangeStatus();
+        }
+        
+        // Close username modal
+        function closeUsernameModal() {
+            usernameModal.style.display = 'none';
+        }
+        
+        // Validate username
+        function validateUsername() {
+            const username = usernameInput.value.trim();
+            const isValid = username.length >= 3 && username.length <= 20;
+            
+            if (!isValid) {
+                usernameError.style.display = 'block';
+                usernameSave.disabled = true;
+            } else {
+                usernameError.style.display = 'none';
+                usernameSave.disabled = false;
+            }
+            
+            return isValid;
+        }
+        
+        // Save username
+        function saveUsername() {
+            if (!validateUsername()) return;
+            
+            const newUsername = usernameInput.value.trim();
+            
+            // Check if this is a change and if it's allowed
+            if (userData.username && userData.lastUsernameChange) {
+                const lastChange = new Date(userData.lastUsernameChange);
+                const now = new Date();
+                const daysSinceChange = (now - lastChange) / (1000 * 60 * 60 * 24);
+                
+                if (daysSinceChange < 5) {
+                    alert(`You can only change your username once every 5 days. Please try again in ${Math.ceil(5 - daysSinceChange)} days.`);
+                    return;
+                }
+            }
+            
+            // Update username
+            userData.username = newUsername;
+            userData.lastUsernameChange = new Date().toISOString();
+            
+            // Update UI
+            usernameElement.textContent = newUsername;
+            memberNameElement.textContent = `${newUsername} (You)`;
+            
+            // Save to localStorage
+            localStorage.setItem('sircordUserData', JSON.stringify(userData));
+            
+            // Close modal
+            closeUsernameModal();
+        }
+        
+        // Update username change status
+        function updateUsernameChangeStatus() {
+            if (userData.username && userData.lastUsernameChange) {
+                const lastChange = new Date(userData.lastUsernameChange);
+                const now = new Date();
+                const daysSinceChange = (now - lastChange) / (1000 * 60 * 60 * 24);
+                
+                if (daysSinceChange < 5) {
+                    const daysLeft = Math.ceil(5 - daysSinceChange);
+                    usernameCountdown.textContent = `You can change your username again in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}.`;
+                    usernameCountdown.style.display = 'block';
+                } else {
+                    usernameCountdown.style.display = 'none';
+                }
+            } else {
+                usernameCountdown.style.display = 'none';
+            }
+        }
+        
+        // Open profile picture modal
+        function openPfpModal() {
+            pfpModal.style.display = 'flex';
+        }
+        
+        // Close profile picture modal
+        function closePfpModal() {
+            pfpModal.style.display = 'none';
+        }
+        
+        // Preview profile picture
+        function previewPfp(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                pfpPreview.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.alt = 'Preview';
+                pfpPreview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Save profile picture
+        function savePfp() {
+            const file = pfpInput.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // Update user data
+                userData.avatar = event.target.result;
+                
+                // Update UI
+                updateAvatarDisplay();
+                
+                // Save to localStorage
+                localStorage.setItem('sircordUserData', JSON.stringify(userData));
+                
+                // Close modal
+                closePfpModal();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
