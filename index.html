@@ -3,984 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sircord - Chat Hub</title>
+    <title>Sircord</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-
         body {
+            background: #23272A;
+            color: white;
+            font-family: Arial, sans-serif;
             display: flex;
             height: 100vh;
-            background-color: #111;
-            color: #fff9c4;
+            margin: 0;
         }
-
-        /* Server sidebar */
-        .servers-sidebar {
-            width: 72px;
-            background-color: #000;
-            padding: 12px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-y: auto;
-        }
-
-        .server-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #ffeb3b, #f57f17);
-            border-radius: 50%;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: border-radius 0.2s;
-            color: #000;
-            font-weight: bold;
-        }
-
-        .server-icon:hover {
-            border-radius: 16px;
-        }
-
-        .server-icon.active {
-            border-radius: 16px;
-        }
-
-        .server-icon.home {
-            background: linear-gradient(135deg, #ffeb3b, #fbc02d);
-        }
-
-        .server-divider {
-            width: 32px;
-            height: 2px;
-            background-color: #333;
-            margin: 8px 0;
-        }
-
-        /* Channels sidebar */
-        .channels-sidebar {
-            width: 240px;
-            background-color: #111;
-            border-right: 1px solid #222;
+        #sidebar {
+            width: 20%;
+            background: #2C2F33;
+            padding: 20px;
+            text-align: left;
             display: flex;
             flex-direction: column;
         }
-
-        .server-header {
-            padding: 16px;
-            border-bottom: 1px solid #222;
-            font-weight: bold;
-            font-size: 16px;
-            color: #ffeb3b;
-        }
-
-        .channels-container {
-            padding: 16px 8px;
-            flex-grow: 1;
+        #member-list {
+            flex: 1;
             overflow-y: auto;
-        }
-
-        .channel-category {
-            text-transform: uppercase;
-            font-size: 12px;
-            font-weight: bold;
-            color: #fff59d;
-            margin-bottom: 8px;
-            padding: 0 8px;
-        }
-
-        .channel {
-            display: flex;
-            align-items: center;
-            padding: 6px 8px;
-            border-radius: 4px;
-            margin-bottom: 2px;
-            cursor: pointer;
-            color: #fff9c4;
-            opacity: 0.7;
-        }
-
-        .channel:hover {
-            background-color: #222;
-            opacity: 1;
-        }
-
-        .channel.active {
-            background-color: #333;
-            opacity: 1;
-        }
-
-        .channel-icon {
-            margin-right: 6px;
-            font-size: 18px;
-        }
-
-        .user-info {
+            margin-top: 10px;
+            background: #202225;
             padding: 10px;
-            background-color: #0a0a0a;
-            display: flex;
-            align-items: center;
+            border-radius: 5px;
         }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ffeb3b, #f57f17);
-            margin-right: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .user-details {
-            flex-grow: 1;
-            cursor: pointer;
-        }
-
-        .username {
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .user-status {
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        /* Main chat area */
-        .chat-container {
-            flex-grow: 1;
+        #chat-container {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            background-color: #181818;
+            justify-content: space-between;
+            background: #36393F;
+            padding: 20px;
         }
-
-        .chat-header {
-            padding: 12px 16px;
-            border-bottom: 1px solid #222;
-            display: flex;
-            align-items: center;
-        }
-
-        .chat-header-icon {
-            margin-right: 6px;
-            font-size: 20px;
-        }
-
-        .chat-header-title {
-            font-weight: bold;
-            color: #ffeb3b;
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            padding: 16px;
+        #messages {
+            flex: 1;
             overflow-y: auto;
+            padding: 10px;
+            border-bottom: 2px solid yellow;
+        }
+        #user-panel {
+            background: #2C2F33;
+            padding: 10px;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 2px solid yellow;
         }
-
-        .welcome-message {
-            text-align: center;
-            margin: 40px 0;
-            color: #ffeb3b;
-        }
-
-        .message {
-            display: flex;
-            margin-bottom: 16px;
-        }
-
-        .message-avatar {
+        #user-panel img {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #ffeb3b, #f57f17);
-            margin-right: 16px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-            overflow: hidden;
-        }
-
-        .message-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .message-content {
-            flex-grow: 1;
-            max-width: calc(100% - 56px);
-        }
-
-        .message-header {
-            display: flex;
-            align-items: baseline;
-            margin-bottom: 4px;
-        }
-
-        .message-author {
-            font-weight: bold;
-            color: #ffeb3b;
-            margin-right: 8px;
-        }
-
-        .message-time {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .message-text {
-            line-height: 1.4;
-            word-wrap: break-word;
-        }
-
-        .message-media {
-            margin-top: 8px;
-            max-width: 100%;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .message-media img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 4px;
-        }
-
-        .message-media video {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 4px;
-        }
-
-        .chat-input-container {
-            padding: 16px;
-            border-top: 1px solid #222;
-        }
-
-        .chat-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .chat-input {
-            width: 100%;
-            padding: 12px;
-            padding-right: 40px;
-            border-radius: 8px;
-            background-color: #333;
-            border: none;
-            color: #fff9c4;
-            outline: none;
-            resize: none;
-        }
-
-        .chat-input::placeholder {
-            color: #999;
-        }
-
-        .media-button {
-            position: absolute;
-            right: 12px;
-            background: none;
-            border: none;
-            color: #ffeb3b;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .media-button:hover {
-            color: #fff;
-        }
-
-        /* Members sidebar */
-        .members-sidebar {
-            width: 240px;
-            background-color: #111;
-            border-left: 1px solid #222;
-            padding: 16px 0;
-            overflow-y: auto;
-        }
-
-        .members-header {
-            padding: 0 16px 16px;
-            text-transform: uppercase;
-            font-size: 12px;
-            font-weight: bold;
-            color: #fff59d;
-        }
-
-        .member {
-            display: flex;
-            align-items: center;
-            padding: 8px 16px;
-            cursor: pointer;
-        }
-
-        .member:hover {
-            background-color: #222;
-        }
-
-        .member-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ffeb3b, #f57f17);
             margin-right: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-            overflow: hidden;
+            cursor: pointer;
         }
-
-        .member-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .member-name {
-            font-size: 14px;
-        }
-
-        .online-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #43b581;
-            margin-right: 8px;
-        }
-
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: #222;
-            border-radius: 8px;
-            padding: 24px;
-            width: 400px;
-            max-width: 90%;
-        }
-
-        .modal-header {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 16px;
-            color: #ffeb3b;
-        }
-
-        .modal-form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .form-input {
-            width: 100%;
+        input, button {
             padding: 10px;
-            border-radius: 4px;
-            background-color: #333;
-            border: 1px solid #444;
-            color: #fff9c4;
+            margin: 5px;
+            border-radius: 5px;
         }
-
-        .form-error {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 4px;
-            display: none;
+        input {
+            width: 80%;
+            border: none;
+            padding: 12px;
+            background: #40444B;
+            color: white;
         }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 4px;
+        button {
+            background: yellow;
             border: none;
             cursor: pointer;
+        }
+        .message {
+            padding: 5px;
+            background: #2C2F33;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .message span {
             font-weight: bold;
-        }
-
-        .btn-cancel {
-            background-color: #444;
-            color: #fff;
-        }
-
-        .btn-primary {
-            background-color: #ffeb3b;
-            color: #000;
-        }
-
-        .btn-primary:disabled {
-            background-color: #999;
-            cursor: not-allowed;
-        }
-
-        .pfp-preview {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ffeb3b, #f57f17);
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-            overflow: hidden;
-        }
-
-        .pfp-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .file-input-container {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-
-        .file-input-label {
-            padding: 8px 16px;
-            border-radius: 4px;
-            background-color: #444;
-            color: #fff;
-            cursor: pointer;
-            display: inline-block;
-        }
-
-        .file-input {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .countdown {
-            color: #ff6b6b;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        /* Media modal styles */
-        .media-modal-content {
-            width: 500px;
-            max-width: 90%;
-        }
-
-        .media-tabs {
-            display: flex;
-            border-bottom: 1px solid #444;
-            margin-bottom: 16px;
-        }
-
-        .media-tab {
-            padding: 8px 16px;
-            cursor: pointer;
-            color: #999;
-        }
-
-        .media-tab.active {
-            color: #ffeb3b;
-            border-bottom: 2px solid #ffeb3b;
-        }
-
-        .media-tab-content {
-            display: none;
-        }
-
-        .media-tab-content.active {
-            display: block;
-        }
-
-        .gif-search-container {
-            margin-bottom: 16px;
-        }
-
-        .gif-search-input {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            background-color: #333;
-            border: 1px solid #444;
-            color: #fff9c4;
-        }
-
-        .gif-results {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 16px;
-        }
-
-        .gif-item {
-            cursor: pointer;
-            border-radius: 4px;
-            overflow: hidden;
-            height: 120px;
-        }
-
-        .gif-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .gif-item:hover {
-            outline: 2px solid #ffeb3b;
-        }
-
-        .video-preview {
-            width: 100%;
-            max-height: 200px;
-            margin: 16px 0;
-            border-radius: 4px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .video-preview video {
-            width: 100%;
-            max-height: 200px;
-        }
-
-        .url-preview {
-            margin-top: 8px;
-            display: none;
-        }
-
-        .url-preview img, 
-        .url-preview video {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 4px;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1200px) {
-            .members-sidebar {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .channels-sidebar {
-                display: none;
-            }
+            color: yellow;
         }
     </style>
 </head>
 <body>
-    <!-- Server sidebar -->
-    <div class="servers-sidebar">
-        <div class="server-icon home">S</div>
-        <div class="server-divider"></div>
-        <div class="server-icon active">G</div>
-        <div class="server-icon">C</div>
-        <div class="server-icon">D</div>
-        <div class="server-icon">+</div>
+    <div id="sidebar">
+        <h2>Sircord</h2>
+        <input type="text" id="username" placeholder="Enter username">
+        <button onclick="setUsername()">Set Name</button>
+        <div id="member-list"></div>
     </div>
-
-    <!-- Channels sidebar -->
-    <div class="channels-sidebar">
-        <div class="server-header">Sircord</div>
-        <div class="channels-container">
-            <div class="channel-category">Text Channels</div>
-            <div class="channel" data-channel="welcome">
-                <span class="channel-icon">#</span>
-                welcome
-            </div>
-            <div class="channel" data-channel="announcements">
-                <span class="channel-icon">#</span>
-                announcements
-            </div>
-            <div class="channel active" data-channel="general">
-                <span class="channel-icon">#</span>
-                general
-            </div>
-            <div class="channel" data-channel="memes">
-                <span class="channel-icon">#</span>
-                memes
-            </div>
-            <div class="channel-category">Voice Channels</div>
-            <div class="channel">
-                <span class="channel-icon">🔊</span>
-                General Voice
-            </div>
-            <div class="channel">
-                <span class="channel-icon">🔊</span>
-                Gaming
-            </div>
-            <div class="channel">
-                <span class="channel-icon">🔊</span>
-                Music
-            </div>
-            <div class="channel-category">Other</div>
-            <div class="channel" data-channel="resources">
-                <span class="channel-icon">#</span>
-                resources
-            </div>
-            <div class="channel" data-channel="bot-commands">
-                <span class="channel-icon">#</span>
-                bot-commands
-            </div>
-        </div>
-        <div class="user-info" id="user-profile">
-            <div class="user-avatar" id="user-avatar">
-                <!-- User avatar will be set by JavaScript -->
-            </div>
-            <div class="user-details">
-                <div class="username" id="username">Set Username</div>
-                <div class="user-status">Online</div>
-            </div>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div>
+            <input type="text" id="message" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
         </div>
     </div>
-
-    <!-- Main chat area -->
-    <div class="chat-container">
-        <div class="chat-header">
-            <span class="chat-header-icon">#</span>
-            <span class="chat-header-title" id="current-channel">general</span>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="welcome-message">
-                Welcome to #general! This is the start of the channel.
-            </div>
-            <!-- Messages will be added here by JavaScript -->
-        </div>
-        <div class="chat-input-container">
-            <div class="chat-input-wrapper">
-                <textarea class="chat-input" id="message-input" placeholder="Message #general" rows="1"></textarea>
-                <button class="media-button" id="media-button" title="Add GIF or Video">📎</button>
-            </div>
-        </div>
+    <div id="user-panel">
+        <img id="user-avatar" src="default-avatar.png" onclick="changeAvatar()">
+        <span id="user-name"></span>
     </div>
-
-    <!-- Members sidebar -->
-    <div class="members-sidebar">
-        <div class="members-header">Members — 1</div>
-        <div class="member" id="current-user-member">
-            <div class="online-indicator"></div>
-            <div class="member-avatar" id="member-avatar">
-                <!-- User avatar will be set by JavaScript -->
-            </div>
-            <div class="member-name" id="member-name">You</div>
-        </div>
-    </div>
-
-    <!-- Username Modal -->
-    <div class="modal" id="username-modal">
-        <div class="modal-content">
-            <div class="modal-header">Set Your Username</div>
-            <div class="modal-form">
-                <div class="form-group">
-                    <label class="form-label" for="username-input">Username</label>
-                    <input type="text" id="username-input" class="form-input" placeholder="Enter a username">
-                    <div class="form-error" id="username-error">Username must be between 3 and 20 characters</div>
-                    <div class="countdown" id="username-countdown"></div>
-                </div>
-                <div class="modal-buttons">
-                    <button class="btn btn-cancel" id="username-cancel">Cancel</button>
-                    <button class="btn btn-primary" id="username-save">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Picture Modal -->
-    <div class="modal" id="pfp-modal">
-        <div class="modal-content">
-            <div class="modal-header">Change Profile Picture</div>
-            <div class="pfp-preview" id="pfp-preview">
-                <!-- Preview will be set by JavaScript -->
-            </div>
-            <div class="modal-form">
-                <div class="form-group">
-                    <div class="file-input-container">
-                        <label class="file-input-label" for="pfp-input">Choose Image</label>
-                        <input type="file" id="pfp-input" class="file-input" accept="image/*">
-                    </div>
-                </div>
-                <div class="modal-buttons">
-                    <button class="btn btn-cancel" id="pfp-cancel">Cancel</button>
-                    <button class="btn btn-primary" id="pfp-save">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Media Modal -->
-    <div class="modal" id="media-modal">
-        <div class="modal-content media-modal-content">
-            <div class="modal-header">Add Media</div>
-            <div class="media-tabs">
-                <div class="media-tab active" data-tab="gif">GIF</div>
-                <div class="media-tab" data-tab="video">Video</div>
-                <div class="media-tab" data-tab="url">URL</div>
-            </div>
-            <div class="media-tab-content active" id="gif-tab">
-                <div class="gif-search-container">
-                    <input type="text" class="gif-search-input" id="gif-search" placeholder="Search for GIFs...">
-                </div>
-                <div class="gif-results" id="gif-results">
-                    <!-- GIF results will be loaded here -->
-                </div>
-            </div>
-            <div class="media-tab-content" id="video-tab">
-                <div class="form-group">
-                    <div class="file-input-container">
-                        <label class="file-input-label" for="video-input">Choose Video</label>
-                        <input type="file" id="video-input" class="file-input" accept="video/*">
-                    </div>
-                </div>
-                <div class="video-preview" id="video-preview">
-                    <video controls></video>
-                </div>
-            </div>
-            <div class="media-tab-content" id="url-tab">
-                <div class="form-group">
-                    <label class="form-label" for="url-input">Media URL</label>
-                    <input type="text" id="url-input" class="form-input" placeholder="Paste GIF or video URL">
-                </div>
-                <div class="url-preview" id="url-preview">
-                    <!-- Preview will be shown here -->
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" id="media-cancel">Cancel</button>
-                <button class="btn btn-primary" id="media-send">Send</button>
-            </div>
-        </div>
-    </div>
-
+    
     <script>
-        const API_URL = 'https://your-vercel-app.vercel.app/api/messages'; // Replace with your Vercel URL
-
-        // DOM Elements
-        const chatMessages = document.getElementById('chat-messages');
-        const messageInput = document.getElementById('message-input');
-        const currentChannelElement = document.getElementById('current-channel');
-        const channels = document.querySelectorAll('.channel[data-channel]');
-
-        // Current state
-        let currentChannel = 'general';
-
-        // Load messages for a channel
-        async function loadMessagesForChannel(channelName) {
-            const response = await fetch(`${API_URL}?channel=${channelName}`);
+        let username = localStorage.getItem('sircordUsername');
+        if (username) {
+            document.getElementById('username').value = username;
+            document.getElementById('username').disabled = true;
+            document.getElementById('user-name').textContent = username;
+        }
+        
+        async function loadMessages() {
+            const response = await fetch('/api/messages.js?channel=general');
             const messages = await response.json();
-
-            chatMessages.innerHTML = '';
-
-            // Add welcome message
-            const welcomeDiv = document.createElement('div');
-            welcomeDiv.className = 'welcome-message';
-            welcomeDiv.textContent = `Welcome to #${channelName}! This is the start of the channel.`;
-            chatMessages.appendChild(welcomeDiv);
-
-            // Add existing messages
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
             messages.forEach(msg => {
-                addMessageToDOM(msg);
+                messagesDiv.innerHTML += `<div class='message'><span>${msg.author}:</span> ${msg.text}</div>`;
             });
         }
-
-        // Send a message
-        async function sendMessage() {
-            const text = messageInput.value.trim();
-            if ((!text && !selectedMedia) || !userData.username) return;
-
-            const message = {
-                author: userData.username,
-                avatar: userData.avatar,
-                text: text,
-                media: selectedMedia
-            };
-
-            // Send message to backend
-            const response = await fetch(`${API_URL}?channel=${currentChannel}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(message)
-            });
-
-            const newMessage = await response.json();
-
-            // Add to DOM
-            addMessageToDOM(newMessage);
-
-            // Clear input and selected media
-            messageInput.value = '';
-            selectedMedia = null;
-        }
-
-        // Add a message to the DOM
-        function addMessageToDOM(message) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-
-            // Avatar
-            const avatarDiv = document.createElement('div');
-            avatarDiv.className = 'message-avatar';
-            if (message.avatar) {
-                const img = document.createElement('img');
-                img.src = message.avatar;
-                avatarDiv.appendChild(img);
+        
+        function setUsername() {
+            if (!localStorage.getItem('sircordUsername')) {
+                username = document.getElementById('username').value;
+                localStorage.setItem('sircordUsername', username);
+                document.getElementById('username').disabled = true;
+                document.getElementById('user-name').textContent = username;
             } else {
-                avatarDiv.textContent = message.author.charAt(0).toUpperCase();
+                alert('You can only set your name once!');
             }
-            messageDiv.appendChild(avatarDiv);
-
-            // Content
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-
-            // Header
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'message-header';
-
-            const authorSpan = document.createElement('span');
-            authorSpan.className = 'message-author';
-            authorSpan.textContent = message.author;
-            headerDiv.appendChild(authorSpan);
-
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'message-time';
-            timeSpan.textContent = formatTime(message.timestamp);
-            headerDiv.appendChild(timeSpan);
-
-            contentDiv.appendChild(headerDiv);
-
-            // Text
-            if (message.text) {
-                const textP = document.createElement('p');
-                textP.className = 'message-text';
-                textP.textContent = message.text;
-                contentDiv.appendChild(textP);
-            }
-
-            // Media
-            if (message.media) {
-                const mediaDiv = document.createElement('div');
-                mediaDiv.className = 'message-media';
-
-                if (message.media.type === 'image') {
-                    const img = document.createElement('img');
-                    img.src = message.media.url;
-                    img.alt = 'Media';
-                    mediaDiv.appendChild(img);
-                } else if (message.media.type === 'video') {
-                    const video = document.createElement('video');
-                    video.src = message.media.url;
-                    video.controls = true;
-                    mediaDiv.appendChild(video);
-                }
-
-                contentDiv.appendChild(mediaDiv);
-            }
-
-            messageDiv.appendChild(contentDiv);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-
-        // Format time
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            let hours = date.getHours();
-            let minutes = date.getMinutes();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12; // the hour '0' should be '12'
-            minutes = minutes < 10 ? '0'+minutes : minutes;
-            return hours + ':' + minutes + ' ' + ampm;
+        
+        function changeAvatar() {
+            const newAvatar = prompt('Enter avatar image URL:');
+            if (newAvatar) {
+                document.getElementById('user-avatar').src = newAvatar;
+                localStorage.setItem('sircordAvatar', newAvatar);
+            }
         }
-
-        // Initialize the app
-        async function init() {
-            // Load messages for the current channel
-            await loadMessagesForChannel(currentChannel);
-
-            // Set up channel switching
-            channels.forEach(channel => {
-                channel.addEventListener('click', async () => {
-                    currentChannel = channel.dataset.channel;
-                    currentChannelElement.textContent = currentChannel;
-                    messageInput.placeholder = `Message #${currentChannel}`;
-                    await loadMessagesForChannel(currentChannel);
-                });
+        
+        async function sendMessage() {
+            const text = document.getElementById('message').value;
+            if (!username || !text) return;
+            
+            await fetch('/api/messages.js?channel=general', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ author: username, text })
             });
-
-            // Set up message sending
-            messageInput.addEventListener('keydown', async (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    await sendMessage();
-                }
-            });
+            document.getElementById('message').value = '';
+            loadMessages();
         }
-
-        // Start the app
-        init();
+        
+        function loadAvatar() {
+            const storedAvatar = localStorage.getItem('sircordAvatar');
+            if (storedAvatar) {
+                document.getElementById('user-avatar').src = storedAvatar;
+            }
+        }
+        
+        loadAvatar();
+        loadMessages();
+        setInterval(loadMessages, 3000);
     </script>
 </body>
 </html>
