@@ -89,7 +89,7 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.7);
       overflow: hidden;
     }
-    /* Channel Navigation (only for text channels) */
+    /* Channel Navigation (for text channels) */
     #channel-nav {
       display: flex;
       gap: 10px;
@@ -222,12 +222,12 @@
       border-radius: 5px;
       display: flex;
       align-items: center;
+      gap: 10px;
     }
     #user-panel img {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      margin-right: 10px;
       cursor: pointer;
       border: 2px solid transparent;
       transition: border 0.3s;
@@ -310,15 +310,15 @@
   <div id="sidebar">
     <h2>Sircord</h2>
     <!-- Tab Switcher -->
-    <button class="tab-btn active" onclick="switchTab('text')">Sircord</button>
-    <button class="tab-btn" onclick="switchTab('voice')">SirVC</button>
-    <!-- The following buttons show only when text tab is active -->
+    <button class="tab-btn active" onclick="switchTab('text', event)">Sircord</button>
+    <button class="tab-btn" onclick="switchTab('voice', event)">SirVC</button>
+    <!-- Options for Text Chat -->
     <div id="text-sidebar-options">
       <button onclick="openUsernamePopup()">Set Name</button>
+      <button onclick="openSetPFPPopup()">Set PFP</button>
       <div id="settings" onclick="openSettings()">⚙ Settings</div>
       <div id="credits" onclick="openCredits()">ℹ Credits</div>
     </div>
-    <!-- Voice options appear in chat container when voice tab is active -->
   </div>
   <div id="chat-container">
     <!-- Channel Navigation for Text Channels -->
@@ -327,27 +327,28 @@
       <div class="channel-tab" onclick="switchChannel('memes')">memes</div>
       <div class="channel-tab" onclick="switchChannel('announcements')">announcements</div>
     </div>
-    <!-- Messages Area (for text channels) -->
+    <!-- Messages Area (for Text Channels) -->
     <div id="messages"></div>
-    <!-- Chat Input Area (only for text channels) -->
+    <!-- Chat Input Area (for Text Channels) -->
     <div id="chat-input-area">
       <input type="text" id="message-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter'){sendMessage();}">
       <button onclick="sendMessage()">Send</button>
     </div>
-    <!-- Voice Chat Area (for voice channels) -->
+    <!-- Voice Chat Area (for Voice Channels) -->
     <div id="voice-chat-area">
       <button onclick="openVoiceChannelPopup()">Join Voice Channel</button>
       <button onclick="createVoiceChannel()">Create Voice Channel</button>
-      <p>Your Call ID: <span id="peer-id-display">N/A</span></p>
+      <p>Your SirVC Id: <span id="peer-id-display">N/A</span></p>
     </div>
     <!-- User Panel (always visible in top-right) -->
     <div id="user-panel">
       <img id="user-avatar" src="default-avatar.png" alt="Avatar" onclick="changeAvatar()" />
       <span id="user-name">Guest</span>
+      <button onclick="openSetPFPPopup()" style="padding:5px 8px; font-size:0.8em; cursor:pointer;">Set PFP</button>
     </div>
     <!-- If hosting a voice channel, display host info -->
     <div id="voice-channel-display" style="display:none;">
-      <p>Your Voice Channel - Call ID: <span id="host-peer-id">N/A</span></p>
+      <p>Your Voice Channel - SirVC Id: <span id="host-peer-id">N/A</span></p>
       <div style="display:flex; align-items:center;">
         <img id="host-avatar" src="default-avatar.png" alt="Host Avatar">
         <span id="host-name">Host</span>
@@ -367,6 +368,12 @@
     <h3>Enter Your Username</h3>
     <input type="text" id="username-input" placeholder="Username" />
     <button onclick="setUsername()">Confirm</button>
+  </div>
+  <!-- Set PFP Modal -->
+  <div id="set-pfp-popup" class="modal">
+    <h3>Set Your Profile Picture</h3>
+    <input type="text" id="pfp-input" placeholder="Image URL" />
+    <button onclick="setPFP()">Set PFP</button>
   </div>
   <!-- Settings Modal -->
   <div id="settings-popup" class="modal">
@@ -389,9 +396,9 @@
   <div id="voice-channel-popup" class="modal">
     <h3>Voice Channel</h3>
     <div id="voice-info">
-      <p>Your Peer ID: <span id="peer-id-display-modal">N/A</span></p>
+      <p>Your SirVC Id: <span id="peer-id-display-modal">N/A</span></p>
     </div>
-    <input type="text" id="call-peer-id" placeholder="Peer ID to call" />
+    <input type="text" id="call-peer-id" placeholder="SirVC Id to call" />
     <button onclick="callPeer()">Call Peer</button>
     <br>
     <button id="mute-btn" onclick="toggleMute()">Mute</button>
@@ -415,14 +422,14 @@
     }
     
     // Switch between Text and Voice tabs
-    function switchTab(tab) {
+    function switchTab(tab, event) {
       activeTab = tab;
       // Update sidebar tab buttons
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
       });
       event.target.classList.add('active');
-      // Show/hide chat container sections based on active tab
+      // Show/hide sections based on active tab
       if(activeTab === 'text') {
         document.getElementById('channel-nav').style.display = 'flex';
         document.getElementById('messages').style.display = 'block';
@@ -439,7 +446,6 @@
     // Switch between text channels
     function switchChannel(channel) {
       currentTextChannel = channel;
-      // Update channel tab active state
       document.querySelectorAll('.channel-tab').forEach(tab => {
         tab.classList.remove('active');
         if(tab.innerText === channel) {
@@ -546,6 +552,22 @@
         document.getElementById('user-name').textContent = username;
         closeModal('username-popup');
       }
+    }
+    
+    function openSetPFPPopup() {
+      document.getElementById('set-pfp-popup').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+    
+    function setPFP() {
+      const pfpUrl = document.getElementById('pfp-input').value.trim();
+      if(pfpUrl === '') {
+        alert('PFP URL cannot be empty!');
+        return;
+      }
+      document.getElementById('user-avatar').src = pfpUrl;
+      localStorage.setItem('sircordAvatar', pfpUrl);
+      closeModal('set-pfp-popup');
     }
     
     function changeAvatar() {
@@ -668,7 +690,7 @@
     function callPeer() {
       const peerId = document.getElementById('call-peer-id').value.trim();
       if(!peerId) {
-        alert('Please enter a peer ID.');
+        alert('Please enter a SirVC Id.');
         return;
       }
       if(peer && localStream) {
