@@ -6,7 +6,7 @@
     <title>Sircord</title>
     <style>
         body {
-            background: #23272A;
+            background: linear-gradient(135deg, #23272A, #181A1B);
             color: white;
             font-family: Arial, sans-serif;
             display: flex;
@@ -14,20 +14,24 @@
             margin: 0;
         }
         #sidebar {
-            width: 20%;
+            width: 18%;
             background: #2C2F33;
             padding: 20px;
             text-align: left;
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
         #member-list {
-            flex: 1;
-            overflow-y: auto;
-            margin-top: 10px;
+            width: 15%;
             background: #202225;
             padding: 10px;
+            overflow-y: auto;
             border-radius: 5px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100vh;
         }
         #chat-container {
             flex: 1;
@@ -36,6 +40,7 @@
             justify-content: space-between;
             background: #36393F;
             padding: 20px;
+            border-radius: 5px;
         }
         #messages {
             flex: 1;
@@ -85,14 +90,23 @@
             font-weight: bold;
             color: yellow;
         }
+        #settings, #credits {
+            background: #181A1B;
+            padding: 10px;
+            margin-top: 10px;
+            width: 100%;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <h2>Sircord</h2>
-        <input type="text" id="username" placeholder="Enter username">
-        <button onclick="setUsername()">Set Name</button>
-        <div id="member-list"></div>
+        <button onclick="openUsernamePopup()">Set Name</button>
+        <div id="settings">⚙ Settings</div>
+        <div id="credits">ℹ Credits</div>
     </div>
     <div id="chat-container">
         <div id="messages"></div>
@@ -101,16 +115,24 @@
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
+    <div id="member-list">
+        <h3>Members</h3>
+        <input type="text" placeholder="Search...">
+    </div>
     <div id="user-panel">
         <img id="user-avatar" src="default-avatar.png" onclick="changeAvatar()">
-        <span id="user-name"></span>
+        <span id="user-name">Guest</span>
+    </div>
+    
+    <div id="username-popup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2C2F33; padding: 20px; border-radius: 5px; text-align: center;">
+        <h3>Enter Your Username</h3>
+        <input type="text" id="username-input">
+        <button onclick="setUsername()">Confirm</button>
     </div>
     
     <script>
         let username = localStorage.getItem('sircordUsername');
         if (username) {
-            document.getElementById('username').value = username;
-            document.getElementById('username').disabled = true;
             document.getElementById('user-name').textContent = username;
         }
         
@@ -124,14 +146,20 @@
             });
         }
         
-        function setUsername() {
+        function openUsernamePopup() {
             if (!localStorage.getItem('sircordUsername')) {
-                username = document.getElementById('username').value;
-                localStorage.setItem('sircordUsername', username);
-                document.getElementById('username').disabled = true;
-                document.getElementById('user-name').textContent = username;
+                document.getElementById('username-popup').style.display = 'block';
             } else {
                 alert('You can only set your name once!');
+            }
+        }
+        
+        function setUsername() {
+            if (!localStorage.getItem('sircordUsername')) {
+                username = document.getElementById('username-input').value;
+                localStorage.setItem('sircordUsername', username);
+                document.getElementById('user-name').textContent = username;
+                document.getElementById('username-popup').style.display = 'none';
             }
         }
         
