@@ -1,199 +1,528 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sircord</title>
-    <style>
-        body {
-            background: linear-gradient(135deg, #23272A, #181A1B);
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            height: 100vh;
-            margin: 0;
-        }
-        #sidebar {
-            width: 18%;
-            background: #2C2F33;
-            padding: 20px;
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #member-list {
-            width: 15%;
-            background: #202225;
-            padding: 10px;
-            overflow-y: auto;
-            border-radius: 5px;
-            position: absolute;
-            right: 0;
-            top: 0;
-            height: 100vh;
-        }
-        #chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            background: #36393F;
-            padding: 20px;
-            border-radius: 5px;
-        }
-        #messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            border-bottom: 2px solid yellow;
-        }
-        #user-panel {
-            background: #2C2F33;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 2px solid yellow;
-        }
-        #user-panel img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-        input, button {
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-        }
-        input {
-            width: 80%;
-            border: none;
-            padding: 12px;
-            background: #40444B;
-            color: white;
-        }
-        button {
-            background: yellow;
-            border: none;
-            cursor: pointer;
-        }
-        .message {
-            padding: 5px;
-            background: #2C2F33;
-            margin: 5px 0;
-            border-radius: 5px;
-        }
-        .message span {
-            font-weight: bold;
-            color: yellow;
-        }
-        #settings, #credits {
-            background: #181A1B;
-            padding: 10px;
-            margin-top: 10px;
-            width: 100%;
-            text-align: center;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sircord</title>
+  <!-- PeerJS library for voice channel functionality -->
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      background: linear-gradient(135deg, #23272A, #181A1B);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    /* Sidebar */
+    #sidebar {
+      width: 18%;
+      background: linear-gradient(135deg, #2C2F33, #23272A);
+      padding: 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    }
+    #sidebar h2 {
+      margin-top: 0;
+      font-size: 1.8em;
+    }
+    #sidebar button {
+      width: 80%;
+      margin: 10px 0;
+      background: #7289da;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #sidebar button:hover {
+      background: #5b6eae;
+    }
+    /* Settings & Credits Buttons */
+    #settings, #credits {
+      background: #181A1B;
+      padding: 10px;
+      margin-top: 10px;
+      width: 80%;
+      text-align: center;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #settings:hover, #credits:hover {
+      background: #40444B;
+    }
+    /* Chat Container */
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #36393F, #2F3136);
+      padding: 20px;
+      border-radius: 5px;
+      margin: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      border-bottom: 2px solid #ffcc00;
+    }
+    .message {
+      padding: 8px;
+      background: linear-gradient(135deg, #2C2F33, #23272A);
+      margin: 8px 0;
+      border-radius: 5px;
+      box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+    }
+    .message span {
+      font-weight: bold;
+      color: #ffcc00;
+    }
+    /* Message Input */
+    #chat-container div:last-child {
+      display: flex;
+      align-items: center;
+    }
+    #message {
+      flex: 1;
+      border: none;
+      padding: 12px;
+      background: #40444B;
+      color: white;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+    #chat-container button {
+      background: #ffcc00;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #chat-container button:hover {
+      background: #e6b800;
+    }
+    /* Member List */
+    #member-list {
+      width: 15%;
+      background: linear-gradient(135deg, #202225, #181A1B);
+      padding: 10px;
+      overflow-y: auto;
+      border-radius: 5px;
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100vh;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+    }
+    #member-list h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    #member-list input {
+      width: 90%;
+      border: none;
+      padding: 8px;
+      margin: 10px 5%;
+      border-radius: 5px;
+      background: #40444B;
+      color: white;
+    }
+    /* User Panel */
+    #user-panel {
+      background: linear-gradient(135deg, #2C2F33, #23272A);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border-top: 2px solid #ffcc00;
+      position: absolute;
+      bottom: 0;
+      left: 18%;
+      width: calc(100% - 33%);
+    }
+    #user-panel img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border 0.3s;
+    }
+    /* Green border when talking */ 
+    .talking {
+      border-color: #43B581 !important;
+    }
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #2C2F33;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      z-index: 10;
+      text-align: center;
+    }
+    .modal input, .modal select {
+      width: 80%;
+      margin: 10px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #40444B;
+      color: white;
+    }
+    .modal button {
+      background: #ffcc00;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .modal button:hover {
+      background: #e6b800;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      z-index: 5;
+    }
+    /* Voice Channel Modal Styles */
+    #voice-channel-popup {
+      max-width: 400px;
+    }
+    #voice-channel-popup h3 {
+      margin-top: 0;
+    }
+    #voice-remote-audio {
+      display: none; /* Hidden audio element to play remote stream */
+    }
+  </style>
 </head>
 <body>
-    <div id="sidebar">
-        <h2>Sircord</h2>
-        <button onclick="openUsernamePopup()">Set Name</button>
-        <div id="settings">⚙ Settings</div>
-        <div id="credits">ℹ Credits</div>
+  <div id="sidebar">
+    <h2>Sircord</h2>
+    <button onclick="openUsernamePopup()">Set Name</button>
+    <div id="settings" onclick="openSettings()">⚙ Settings</div>
+    <div id="credits" onclick="openCredits()">ℹ Credits</div>
+    <button onclick="openVoiceChannelPopup()">Join Voice Channel</button>
+  </div>
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div>
+      <input type="text" id="message" placeholder="Type a message..." onkeydown='if(event.key==="Enter"){sendMessage();}'>
+      <button onclick="sendMessage()">Send</button>
     </div>
-    <div id="chat-container">
-        <div id="messages"></div>
-        <div>
-            <input type="text" id="message" placeholder="Type a message...">
-            <button onclick="sendMessage()">Send</button>
-        </div>
+  </div>
+  <div id="member-list">
+    <h3>Members</h3>
+    <input type="text" placeholder="Search...">
+    <!-- Example static member list; you can populate this dynamically if needed -->
+    <p>Member1</p>
+    <p>Member2</p>
+    <p>Member3</p>
+  </div>
+  <div id="user-panel">
+    <img id="user-avatar" src="default-avatar.png" alt="Avatar" onclick="changeAvatar()" />
+    <span id="user-name">Guest</span>
+  </div>
+
+  <!-- Username Modal -->
+  <div id="username-popup" class="modal">
+    <h3>Enter Your Username</h3>
+    <input type="text" id="username-input" placeholder="Username" />
+    <button onclick="setUsername()">Confirm</button>
+  </div>
+  <!-- Settings Modal (Placeholder) -->
+  <div id="settings-popup" class="modal">
+    <h3>Settings</h3>
+    <p>Settings content here.</p>
+    <button onclick="closeModal('settings-popup')">Close</button>
+  </div>
+  <!-- Credits Modal (Placeholder) -->
+  <div id="credits-popup" class="modal">
+    <h3>Credits</h3>
+    <p>Created by Your Name</p>
+    <button onclick="closeModal('credits-popup')">Close</button>
+  </div>
+  <!-- Voice Channel Modal -->
+  <div id="voice-channel-popup" class="modal">
+    <h3>Voice Channel</h3>
+    <div id="voice-info">
+      <p>Your Peer ID: <span id="peer-id-display">N/A</span></p>
     </div>
-    <div id="member-list">
-        <h3>Members</h3>
-        <input type="text" placeholder="Search...">
-    </div>
-    <div id="user-panel">
-        <img id="user-avatar" src="default-avatar.png" onclick="changeAvatar()">
-        <span id="user-name">Guest</span>
-    </div>
-    
-    <div id="username-popup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #2C2F33; padding: 20px; border-radius: 5px; text-align: center;">
-        <h3>Enter Your Username</h3>
-        <input type="text" id="username-input">
-        <button onclick="setUsername()">Confirm</button>
-    </div>
-    
-    <script>
-        let username = localStorage.getItem('sircordUsername');
-        if (username) {
-            document.getElementById('user-name').textContent = username;
+    <input type="text" id="call-peer-id" placeholder="Peer ID to call" />
+    <button onclick="callPeer()">Call Peer</button>
+    <br>
+    <button id="mute-btn" onclick="toggleMute()">Mute</button>
+    <br>
+    <select id="mic-select"></select>
+    <button onclick="changeMic()">Change Mic</button>
+    <br>
+    <button onclick="closeModal('voice-channel-popup')">Leave Voice Channel</button>
+  </div>
+  <!-- Overlay for modals -->  
+  <div id="overlay" class="overlay" onclick="closeAllModals()"></div>
+
+  <!-- Hidden audio element for remote stream -->
+  <audio id="voice-remote-audio" autoplay></audio>
+
+  <script>
+    let username = localStorage.getItem('sircordUsername');
+    if (username) {
+      document.getElementById('user-name').textContent = username;
+    }
+
+    // Chat message functions (same as before)
+    async function loadMessages() {
+      try {
+        const response = await fetch('/api/messages.js?channel=general');
+        const messages = await response.json();
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = '';
+        messages.forEach(msg => {
+          messagesDiv.innerHTML += `<div class='message'><span>${msg.author}:</span> ${msg.text}</div>`;
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      }
+    }
+
+    function openUsernamePopup() {
+      if (!localStorage.getItem('sircordUsername')) {
+        document.getElementById('username-popup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+      } else {
+        alert('You can only set your name once!');
+      }
+    }
+
+    function setUsername() {
+      if (!localStorage.getItem('sircordUsername')) {
+        username = document.getElementById('username-input').value.trim();
+        if(username === '') {
+          alert('Username cannot be empty!');
+          return;
         }
-        
-        async function loadMessages() {
-            const response = await fetch('/api/messages.js?channel=general');
-            const messages = await response.json();
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
-            messages.forEach(msg => {
-                messagesDiv.innerHTML += `<div class='message'><span>${msg.author}:</span> ${msg.text}</div>`;
-            });
+        localStorage.setItem('sircordUsername', username);
+        document.getElementById('user-name').textContent = username;
+        closeModal('username-popup');
+      }
+    }
+
+    function changeAvatar() {
+      const newAvatar = prompt('Enter avatar image URL:');
+      if (newAvatar) {
+        document.getElementById('user-avatar').src = newAvatar;
+        localStorage.setItem('sircordAvatar', newAvatar);
+      }
+    }
+
+    async function sendMessage() {
+      const textInput = document.getElementById('message');
+      const text = textInput.value.trim();
+      if (!username || !text) return;
+      try {
+        const response = await fetch('/api/messages.js?channel=general', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author: username, text })
+        });
+        const newMsg = await response.json();
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML += `<div class='message'><span>${newMsg.author}:</span> ${newMsg.text}</div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        textInput.value = '';
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+
+    function loadAvatar() {
+      const storedAvatar = localStorage.getItem('sircordAvatar');
+      if (storedAvatar) {
+        document.getElementById('user-avatar').src = storedAvatar;
+      }
+    }
+
+    // Modal functions
+    function openSettings() {
+      document.getElementById('settings-popup').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+    function openCredits() {
+      document.getElementById('credits-popup').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+    function openVoiceChannelPopup() {
+      document.getElementById('voice-channel-popup').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+      joinVoiceChannel();
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+      if(id === 'voice-channel-popup'){
+        leaveVoiceChannel();
+      }
+    }
+    function closeAllModals() {
+      const modals = document.getElementsByClassName('modal');
+      for (let modal of modals) {
+        modal.style.display = 'none';
+      }
+      document.getElementById('overlay').style.display = 'none';
+      leaveVoiceChannel();
+    }
+
+    // Voice Channel Variables
+    let peer = null;
+    let localStream = null;
+    let currentCall = null;
+    let isMuted = false;
+
+    // Enumerate audio devices and populate mic dropdown
+    async function populateMicList() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioDevices = devices.filter(device => device.kind === 'audioinput');
+      const micSelect = document.getElementById('mic-select');
+      micSelect.innerHTML = '';
+      audioDevices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || 'Microphone ' + (micSelect.length + 1);
+        micSelect.appendChild(option);
+      });
+    }
+
+    // Join the voice channel: get audio stream, create Peer connection, and set up call listeners
+    async function joinVoiceChannel() {
+      try {
+        await populateMicList();
+        const micSelect = document.getElementById('mic-select');
+        const selectedDeviceId = micSelect.value;
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined }
+        });
+        // Create a PeerJS instance (using default PeerServer)
+        peer = new Peer();
+        peer.on('open', id => {
+          document.getElementById('peer-id-display').textContent = id;
+        });
+        // Automatically answer incoming calls with localStream
+        peer.on('call', call => {
+          currentCall = call;
+          call.answer(localStream);
+          call.on('stream', remoteStream => {
+            playRemoteStream(remoteStream);
+          });
+        });
+      } catch (error) {
+        console.error('Error joining voice channel:', error);
+        alert('Error joining voice channel: ' + error.message);
+      }
+    }
+
+    // Leave voice channel: close peer connection and stop local stream
+    function leaveVoiceChannel() {
+      if (currentCall) {
+        currentCall.close();
+        currentCall = null;
+      }
+      if (peer) {
+        peer.destroy();
+        peer = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      document.getElementById('peer-id-display').textContent = 'N/A';
+    }
+
+    // Call another peer using their Peer ID
+    function callPeer() {
+      const peerId = document.getElementById('call-peer-id').value.trim();
+      if (!peerId) {
+        alert('Please enter a peer ID.');
+        return;
+      }
+      if (peer && localStream) {
+        const call = peer.call(peerId, localStream);
+        currentCall = call;
+        call.on('stream', remoteStream => {
+          playRemoteStream(remoteStream);
+        });
+      }
+    }
+
+    // Play remote audio stream in hidden audio element
+    function playRemoteStream(stream) {
+      const audioElem = document.getElementById('voice-remote-audio');
+      audioElem.srcObject = stream;
+      audioElem.play();
+      audioElem.style.display = 'block';
+    }
+
+    // Toggle mute/unmute on local stream
+    function toggleMute() {
+      if (!localStream) return;
+      isMuted = !isMuted;
+      localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
+      document.getElementById('mute-btn').textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    // Change microphone: stop current stream and get new stream with selected device
+    async function changeMic() {
+      if (!localStream) return;
+      const micSelect = document.getElementById('mic-select');
+      const selectedDeviceId = micSelect.value;
+      // Stop current audio tracks
+      localStream.getTracks().forEach(track => track.stop());
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined }
+        });
+        // If there's an ongoing call, replace tracks
+        if (currentCall) {
+          const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'audio');
+          if (sender) {
+            sender.replaceTrack(localStream.getAudioTracks()[0]);
+          }
         }
-        
-        function openUsernamePopup() {
-            if (!localStorage.getItem('sircordUsername')) {
-                document.getElementById('username-popup').style.display = 'block';
-            } else {
-                alert('You can only set your name once!');
-            }
-        }
-        
-        function setUsername() {
-            if (!localStorage.getItem('sircordUsername')) {
-                username = document.getElementById('username-input').value;
-                localStorage.setItem('sircordUsername', username);
-                document.getElementById('user-name').textContent = username;
-                document.getElementById('username-popup').style.display = 'none';
-            }
-        }
-        
-        function changeAvatar() {
-            const newAvatar = prompt('Enter avatar image URL:');
-            if (newAvatar) {
-                document.getElementById('user-avatar').src = newAvatar;
-                localStorage.setItem('sircordAvatar', newAvatar);
-            }
-        }
-        
-        async function sendMessage() {
-            const text = document.getElementById('message').value;
-            if (!username || !text) return;
-            
-            await fetch('/api/messages.js?channel=general', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ author: username, text })
-            });
-            document.getElementById('message').value = '';
-            loadMessages();
-        }
-        
-        function loadAvatar() {
-            const storedAvatar = localStorage.getItem('sircordAvatar');
-            if (storedAvatar) {
-                document.getElementById('user-avatar').src = storedAvatar;
-            }
-        }
-        
-        loadAvatar();
-        loadMessages();
-        setInterval(loadMessages, 3000);
-    </script>
+      } catch (error) {
+        console.error('Error changing microphone:', error);
+        alert('Error changing microphone: ' + error.message);
+      }
+    }
+
+    loadAvatar();
+    loadMessages();
+    setInterval(loadMessages, 3000);
+  </script>
 </body>
 </html>
