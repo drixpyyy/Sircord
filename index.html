@@ -71,6 +71,7 @@
       border-radius: 5px;
       margin: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+      position: relative;
     }
     #messages {
       flex: 1;
@@ -140,6 +141,24 @@
       background: #40444B;
       color: white;
     }
+    .member {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+    .member img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: auto;
+    }
     /* User Panel */
     #user-panel {
       background: linear-gradient(135deg, #2C2F33, #23272A);
@@ -162,7 +181,7 @@
       border: 2px solid transparent;
       transition: border 0.3s;
     }
-    /* Green border when talking */ 
+    /* Green border when talking */
     .talking {
       border-color: #43B581 !important;
     }
@@ -218,7 +237,21 @@
       margin-top: 0;
     }
     #voice-remote-audio {
-      display: none; /* Hidden audio element to play remote stream */
+      display: none;
+    }
+    /* Voice Channel Display in Chat Area */
+    #voice-channel-display {
+      background: #2F3136;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 2px dashed #ffcc00;
+      border-radius: 5px;
+    }
+    #voice-channel-display img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -229,8 +262,17 @@
     <div id="settings" onclick="openSettings()">⚙ Settings</div>
     <div id="credits" onclick="openCredits()">ℹ Credits</div>
     <button onclick="openVoiceChannelPopup()">Join Voice Channel</button>
+    <button onclick="createVoiceChannel()">Create Voice Channel</button>
   </div>
   <div id="chat-container">
+    <!-- Voice Channel Display (shown if you're hosting a voice channel) -->
+    <div id="voice-channel-display" style="display:none;">
+      <p>Your Voice Channel - Call ID: <span id="host-peer-id">N/A</span></p>
+      <div style="display:flex; align-items:center;">
+        <img id="host-avatar" src="default-avatar.png" alt="Host Avatar">
+        <span id="host-name">Host</span>
+      </div>
+    </div>
     <div id="messages"></div>
     <div>
       <input type="text" id="message" placeholder="Type a message..." onkeydown='if(event.key==="Enter"){sendMessage();}'>
@@ -239,11 +281,10 @@
   </div>
   <div id="member-list">
     <h3>Members</h3>
-    <input type="text" placeholder="Search...">
-    <!-- Example static member list; you can populate this dynamically if needed -->
-    <p>Member1</p>
-    <p>Member2</p>
-    <p>Member3</p>
+    <input type="text" placeholder="Search..." oninput="filterMembers(this.value)">
+    <div id="member-items">
+      <!-- Online members will be dynamically loaded here -->
+    </div>
   </div>
   <div id="user-panel">
     <img id="user-avatar" src="default-avatar.png" alt="Avatar" onclick="changeAvatar()" />
@@ -256,16 +297,20 @@
     <input type="text" id="username-input" placeholder="Username" />
     <button onclick="setUsername()">Confirm</button>
   </div>
-  <!-- Settings Modal (Placeholder) -->
+  <!-- Settings Modal -->
   <div id="settings-popup" class="modal">
     <h3>Settings</h3>
-    <p>Settings content here.</p>
+    <label>
+      <input type="checkbox" id="notifications-toggle" /> Enable Notifications
+    </label>
+    <br>
+    <button onclick="saveSettings()">Save Settings</button>
     <button onclick="closeModal('settings-popup')">Close</button>
   </div>
-  <!-- Credits Modal (Placeholder) -->
+  <!-- Credits Modal -->
   <div id="credits-popup" class="modal">
     <h3>Credits</h3>
-    <p>Created by Your Name</p>
+    <p>Created by sirmeme</p>
     <button onclick="closeModal('credits-popup')">Close</button>
   </div>
   <!-- Voice Channel Modal -->
@@ -296,7 +341,7 @@
       document.getElementById('user-name').textContent = username;
     }
 
-    // Chat message functions (same as before)
+    // Chat message functions
     async function loadMessages() {
       try {
         const response = await fetch('/api/messages.js?channel=general');
@@ -310,6 +355,46 @@
       } catch (error) {
         console.error('Error loading messages:', error);
       }
+    }
+
+    // Online members functions – assumes an API endpoint /api/online.js
+    async function loadOnlineMembers() {
+      try {
+        const response = await fetch('/api/online.js?channel=general');
+        const members = await response.json();
+        const memberItemsDiv = document.getElementById('member-items');
+        memberItemsDiv.innerHTML = '';
+        members.forEach(member => {
+          memberItemsDiv.innerHTML += `
+            <div class="member">
+              <img src="${member.avatar || 'default-avatar.png'}" alt="Avatar">
+              <span>${member.username}</span>
+              <span class="status-indicator" style="background-color: ${member.online ? 'green' : 'grey'};"></span>
+            </div>
+          `;
+        });
+      } catch (error) {
+        console.error('Error loading online members:', error);
+        // Fallback: show current user only
+        document.getElementById('member-items').innerHTML = `
+          <div class="member">
+            <img src="default-avatar.png" alt="Avatar">
+            <span>${username || 'Guest'}</span>
+            <span class="status-indicator" style="background-color: green;"></span>
+          </div>
+        `;
+      }
+    }
+
+    function filterMembers(searchText) {
+      const members = document.getElementsByClassName('member');
+      Array.from(members).forEach(member => {
+        if(member.innerText.toLowerCase().includes(searchText.toLowerCase())) {
+          member.style.display = 'flex';
+        } else {
+          member.style.display = 'none';
+        }
+      });
     }
 
     function openUsernamePopup() {
@@ -398,12 +483,18 @@
       document.getElementById('overlay').style.display = 'none';
       leaveVoiceChannel();
     }
+    function saveSettings() {
+      // Save settings as needed
+      alert('Settings saved!');
+      closeModal('settings-popup');
+    }
 
     // Voice Channel Variables
     let peer = null;
     let localStream = null;
     let currentCall = null;
     let isMuted = false;
+    let isHost = false;
 
     // Enumerate audio devices and populate mic dropdown
     async function populateMicList() {
@@ -432,6 +523,12 @@
         peer = new Peer();
         peer.on('open', id => {
           document.getElementById('peer-id-display').textContent = id;
+          if(isHost) {
+            document.getElementById('host-peer-id').textContent = id;
+            document.getElementById('voice-channel-display').style.display = 'block';
+            document.getElementById('host-avatar').src = document.getElementById('user-avatar').src;
+            document.getElementById('host-name').textContent = username;
+          }
         });
         // Automatically answer incoming calls with localStream
         peer.on('call', call => {
@@ -462,6 +559,9 @@
         localStream = null;
       }
       document.getElementById('peer-id-display').textContent = 'N/A';
+      document.getElementById('host-peer-id').textContent = 'N/A';
+      document.getElementById('voice-channel-display').style.display = 'none';
+      isHost = false;
     }
 
     // Call another peer using their Peer ID
@@ -501,13 +601,11 @@
       if (!localStream) return;
       const micSelect = document.getElementById('mic-select');
       const selectedDeviceId = micSelect.value;
-      // Stop current audio tracks
       localStream.getTracks().forEach(track => track.stop());
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ 
           audio: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined }
         });
-        // If there's an ongoing call, replace tracks
         if (currentCall) {
           const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'audio');
           if (sender) {
@@ -520,9 +618,17 @@
       }
     }
 
+    // Create voice channel as host
+    function createVoiceChannel() {
+      isHost = true;
+      openVoiceChannelPopup();
+    }
+
     loadAvatar();
     loadMessages();
+    loadOnlineMembers();
     setInterval(loadMessages, 3000);
+    setInterval(loadOnlineMembers, 5000);
   </script>
 </body>
 </html>
